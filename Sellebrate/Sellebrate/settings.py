@@ -11,6 +11,15 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 """
 
 from pathlib import Path
+import environ
+import os
+env = environ.Env(
+    DEBUG=(bool, False)
+)
+
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -37,6 +46,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'myapp',
 ]
 
 MIDDLEWARE = [
@@ -76,11 +86,11 @@ WSGI_APPLICATION = 'Sellebrate.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'retail',
-        'USER': 'root',
-        'PASSWORD': 'password',
-        'HOST': 'localhost',  # Or an IP Address that your DB is hosted on
-        'PORT': '3307',  # Default is 3306 for MariaDB/MySQL
+        'NAME': env('DB_NAME', default= 'retail'),
+        'USER': env('DB_USER'),
+        'PASSWORD': env('DB_PASSWORD'),
+        'HOST': env('DB_HOST',default = 'localhost'),  # Or an IP Address that your DB is hosted on
+        'PORT': env('DB_PORT', default = '3306'),  # Default is 3306 for MariaDB/MySQL
     }
 }
 
