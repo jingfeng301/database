@@ -51,6 +51,7 @@
             <tr>
                 <th>Order ID</th>
                 <th>Customer ID</th>
+                <th>Customer Name</th>
                 <th>Order Date</th>
                 <th>Total Amount</th>
                 <th>Shipping Address</th>
@@ -59,8 +60,9 @@
         <tbody>
             {% for order in page_obj %}
             <tr>
-                <td><a href="{% url 'order_detail' order.OrderID %}">{{ order.OrderID }}</a></td>
-                <td>{{ order.CustomerID.CustomerID }}</td>
+                <td>{{ order.OrderID }}</a></td>
+                <td>{{ order.CustomerID }}</td>
+                <td>{{ order.CustomerName }}</td>
                 <td>{{ order.OrderDate }}</td>
                 <td>{{ order.TotalAmount }}</td>
                 <td>{{ order.ShippingAddress }}</td>
