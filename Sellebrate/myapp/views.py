@@ -23,7 +23,7 @@ def product_list(request):
         for row in results
     ]
 
-    paginator = Paginator(products, 50)
+    paginator = Paginator(products, 10)
 
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
@@ -57,7 +57,7 @@ def order_list(request):
         for row in results
     ]
 
-    paginator = Paginator(orders, 50)
+    paginator = Paginator(orders, 10)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
