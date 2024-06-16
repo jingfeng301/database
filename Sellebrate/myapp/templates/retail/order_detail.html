@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Order Detail</title>
+    <style>
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid black;
+        }
+        th, td {
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+    </style>
+</head>
+<body>
+    <h1>Order Detail for Order {{ order.OrderID }}</h1>
+    <table>
+        <thead>
+            <tr>
+                <th>Product ID</th>
+                <th>Quantity</th>
+                <th>Unit Price($)</th>
+                <th>Total Amount($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for detail in order_details %}
+            <tr>
+                <td>{{ detail.ProductID.ProductID }}</td>
+                <td>{{ detail.Quantity }}</td>
+                <td>{{ detail.UnitPrice }}</td>
+                <td>{{ order.TotalAmount }}</td>
+
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <br>
+    <a href="{% url 'order_list' %}">Back to Orders</a>
+</body>
+</html>

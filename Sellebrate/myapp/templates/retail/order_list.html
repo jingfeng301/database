@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Product List</title>
+    <title>Order List</title>
     <style>
         table {
             width: 100%;
@@ -43,24 +43,27 @@
     </style>
 </head>
 <body>
-    <h1>Product List</h1>
+    <h1>View Past Order</h1>
     <a href="{% url 'index' %}">Back to Home</a>
+    <br>
     <table>
         <thead>
             <tr>
-                <th>Product ID</th>
-                <th>Product Name</th>
-                <th>Category</th>
-                <th>Unit Price ($)</th>
+                <th>Order ID</th>
+                <th>Customer ID</th>
+                <th>Order Date</th>
+                <th>Total Amount</th>
+                <th>Shipping Address</th>
             </tr>
         </thead>
         <tbody>
-            {% for product in page_obj %}
+            {% for order in page_obj %}
             <tr>
-                <td>{{ product.ProductID }}</td>
-                <td>{{ product.ProductName }}</td>
-                <td>{{ product.Category }}</td>
-                <td>{{ product.UnitPrice }}</td>
+                <td><a href="{% url 'order_detail' order.OrderID %}">{{ order.OrderID }}</a></td>
+                <td>{{ order.CustomerID.CustomerID }}</td>
+                <td>{{ order.OrderDate }}</td>
+                <td>{{ order.TotalAmount }}</td>
+                <td>{{ order.ShippingAddress }}</td>
             </tr>
             {% endfor %}
         </tbody>
