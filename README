@@ -7,4 +7,14 @@ Hence, Sell-ebrate seeks to sell and manage products using a web application to 
 To Do:
 1) Write out instruction on how to use this app in README
 2) Insert in CRUD Ops inside Views.py
-3) Create a slightly btr UI, now is ugly
+
+
+Please create a new table inside your database:
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL
+);
+
+
+for login and register page
