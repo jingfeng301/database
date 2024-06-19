@@ -1,151 +1,479 @@
 {% extends "retail/base.html" %}
-
-{% block title %}Dashboard - Sellebrate{% endblock %}
-
+{% block title %}
+Dashboard - Sellebrate
+{% endblock %}
 {% block content %}
 <div class="jumbotron">
-    <h1 class="display-4">Welcome to Sellebrate!</h1>
-    <p class="lead">Your one-stop database for retail management</p>
-    <hr class="my-4">
-    {% if insights %}
-    <div class="row">
-        <div class="col-md-3">
-            <div class="card text-white bg-primary mb-3">
-                <div class="card-header">Total Sales</div>
-                <div class="card-body">
-                    <h5 class="card-title">${{ insights.total_sales }}</h5>
-                </div>
-            </div>
+  <h1 class="display-4">Welcome to Sellebrate!</h1>
+  <p class="lead">Your one-stop database for retail management</p>
+  <hr class="my-4" />
+  {% if insights %}
+  <div class="row">
+    <div class="col-md-3">
+      <div class="card text-white bg-success mb-3">
+        <div class="card-header">Total Sales</div>
+        <div class="card-body">
+          <h5 class="card-title">${{ insights.total_sales }}</h5>
         </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-secondary mb-3">
-                <div class="card-header">Total Orders</div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ insights.total_orders }}</h5>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-success mb-3">
-                <div class="card-header">Total Products</div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ insights.total_products }}</h5>
-                </div>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="card text-white bg-danger mb-3">
-                <div class="card-header">Total Stock</div>
-                <div class="card-body">
-                    <h5 class="card-title">{{ insights.total_stock }}</h5>
-                </div>
-            </div>
-        </div>
+      </div>
     </div>
-    
-    <h2>Total Sales and Quantity Sold by Product</h2>
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Product ID</th>
-                <th>Product Name</th>
-                <th>Total Units Sold</th>
-                <th>Total Sales ($)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in insights.total_sales_data %}
-            <tr>
-                <td>{{ item.ProductID }}</td>
-                <td>{{ item.ProductName }}</td>
-                <td>{{ item.TotalUnitsSold }}</td>
-                <td>{{ item.TotalSales }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+    <div class="col-md-3">
+      <div class="card text-white bg-primary mb-3">
+        <div class="card-header">Total Orders</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ insights.total_orders }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Total Products</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ insights.total_products }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Total Stock</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ insights.total_stock }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Customer Retention Rate</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ insights.customer_retention_rate }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Average Order Value</div>
+        <div class="card-body">
+          <h5 class="card-title">${{ insights.average_order_value }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Average Products per Order</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ insights.average_products_per_order }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Monthly Recurring Revnue</div>
+        <div class="card-body">
+          <h5 class="card-title">${{ insights.mrr }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Lifetime Value</div>
+        <div class="card-body">
+          <h5 class="card-title">{{ insights.ltv }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Average Revenue Per User</div>
+        <div class="card-body">
+          <h5 class="card-title">${{ insights.arpu }}</h5>
+        </div>
+      </div>
+    </div>
+    <div class="col-md-3">
+      <div class="card text-white bg-secondary mb-3">
+        <div class="card-header">Average Order Value</div>
+        <div class="card-body">
+          <h5 class="card-title">${{ insights.aov }}</h5>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    <h2>Best Selling Products Per Category</h2>
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Category</th>
-                <th>Product ID</th>
-                <th>Product Name</th>
-                <th>Total Sales ($)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in insights.best_selling_per_category %}
-            <tr>
-                <td>{{ item.Category }}</td>
-                <td>{{ item.ProductID }}</td>
-                <td>{{ item.ProductName }}</td>
-                <td>{{ item.TotalSales }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <h2>Total Sales and Quantity Sold by Product</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Total Units Sold</th>
+        <th>Total Sales ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.total_sales_data %}
+      <tr>
+        <td>{{ item.ProductID }}</td>
+        <td>{{ item.ProductName }}</td>
+        <td>{{ item.TotalUnitsSold }}</td>
+        <td>{{ item.TotalSales }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <h2>Total Sales Per Product Category</h2>
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Category</th>
-                <th>Total Sales ($)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in insights.total_sales_per_category %}
-            <tr>
-                <td>{{ item.Category }}</td>
-                <td>{{ item.TotalSales }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <h2>Best Selling Products Per Category</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Category</th>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Total Sales ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.best_selling_per_category %}
+      <tr>
+        <td>{{ item.Category }}</td>
+        <td>{{ item.ProductID }}</td>
+        <td>{{ item.ProductName }}</td>
+        <td>{{ item.TotalSales }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <h2>Products Not Sold in the Last Month</h2>
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Product ID</th>
-                <th>Product Name</th>
-                <th>Category</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in insights.products_not_sold_last_month %}
-            <tr>
-                <td>{{ item.ProductID }}</td>
-                <td>{{ item.ProductName }}</td>
-                <td>{{ item.Category }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+  <h2>Total Sales Per Product Category</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Category</th>
+        <th>Total Sales ($)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.total_sales_per_category %}
+      <tr>
+        <td>{{ item.Category }}</td>
+        <td>{{ item.TotalSales }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 
-    <h2>Customers Without Recent Transactions (Past 1 Year)</h2>
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Customer ID</th>
-                <th>Name</th>
-                <th>Email</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for item in insights.customers_without_recent_transactions %}
-            <tr>
-                <td>{{ item.CustomerID }}</td>
-                <td>{{ item.Name }}</td>
-                <td>{{ item.Email }}</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p>Please log in to view insights and analytics.</p>
-    {% endif %}
+  <h2>Products Not Sold in the Last Month</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Category</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.products_not_sold_last_month %}
+      <tr>
+        <td>{{ item.ProductID }}</td>
+        <td>{{ item.ProductName }}</td>
+        <td>{{ item.Category }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Customers Without Recent Transactions (Past 1 Year)</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Email</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.customers_without_recent_transactions %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.Email }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Products with Low Stock</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Stock Quantity</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.low_stock_products %}
+      <tr>
+        <td>{{ item.ProductID }}</td>
+        <td>{{ item.ProductName }}</td>
+        <td>{{ item.StockQuantity }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Products with No Stock</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Product Name</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.no_stock_products %}
+      <tr>
+        <td>{{ item.ProductID }}</td>
+        <td>{{ item.ProductName }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Customers with the Highest Total Amount Spent</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Total Amount Spent</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.customers_highest_total_amount_spent %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.Email }}</td>
+        <td>{{ item.TotalAmountSpent }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Customers with the Highest Number of Orders</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Total Orders</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.customers_highest_total_orders %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.Email }}</td>
+        <td>{{ item.TotalOrders }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Customers with the Highest Average Order Amount</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Average Order Amount</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.customers_highest_average_order_amount %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.Email }}</td>
+        <td>{{ item.AverageOrderAmount }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Customers with the Highest Number of Products Purchased</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Total Products Purchased</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.customers_highest_total_products_purchased %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.Email }}</td>
+        <td>{{ item.TotalProductsPurchased }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Customers with the Highest Average Number of Products Purchased</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Average Products Purchased</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.customers_highest_average_products_purchased %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.Email }}</td>
+        <td>{{ item.AverageProductsPurchased }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Average Sales per Day</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Sale Date</th>
+        <th>Average Sales</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.average_sales_per_day %}
+      <tr>
+        <td>{{ item.SaleDate }}</td>
+        <td>{{ item.AverageSales }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Top N Products Sold Together</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID 1</th>
+        <th>Product ID 2</th>
+        <th>Times Sold Together</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.top_products_sold_together %}
+      <tr>
+        <td>{{ item.ProductID1 }}</td>
+        <td>{{ item.ProductID2 }}</td>
+        <td>{{ item.TimesSoldTogether }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Average Customer Order Value</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Average Order Value</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.average_customer_order_value %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.AverageOrderValue }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Monthly Sales Trend for Each Product</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product Name</th>
+        <th>Year</th>
+        <th>Month</th>
+        <th>Total Sales</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.monthly_sales_trend %}
+      <tr>
+        <td>{{ item.ProductName }}</td>
+        <td>{{ item.Year }}</td>
+        <td>{{ item.Month }}</td>
+        <td>{{ item.TotalSales }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Revenue Contribution by Top Customers</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Customer ID</th>
+        <th>Name</th>
+        <th>Total Spent</th>
+        <th>Contribution</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.revenue_contribution_top_customers %}
+      <tr>
+        <td>{{ item.CustomerID }}</td>
+        <td>{{ item.Name }}</td>
+        <td>{{ item.TotalSpent }}</td>
+        <td>{{ item.Contribution }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Stock Turnover Rate</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Product Name</th>
+        <th>Total Sold</th>
+        <th>Stock Quantity</th>
+        <th>Stock Turnover Rate</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.stock_turnover_rate %}
+      <tr>
+        <td>{{ item.ProductID }}</td>
+        <td>{{ item.ProductName }}</td>
+        <td>{{ item.TotalSold }}</td>
+        <td>{{ item.StockQuantity }}</td>
+        <td>{{ item.StockTurnoverRate }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <p>Please log in to view insights and analytics.</p>
+  {% endif %}
 </div>
 {% endblock %}
