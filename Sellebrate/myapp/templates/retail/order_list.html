@@ -19,7 +19,7 @@
     <tbody>
         {% for order in page_obj %}
         <tr>
-            <td>{{ order.OrderID }}</td>
+            <td><a href="/orders/{{ order.OrderID }}">{{ order.OrderID }}</a></td>
             <td>{{ order.CustomerID }}</td>
             <td>{{ order.CustomerName }}</td>
             <td>{{ order.OrderDate }}</td>

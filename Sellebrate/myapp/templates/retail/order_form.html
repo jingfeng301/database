@@ -7,10 +7,12 @@
     <h1 class="my-4">{% if order %}Update Order{% else %}Create Order{% endif %}</h1>
     <form method="post">
         {% csrf_token %}
+        {% if not order %}
         <div class="form-group">
             <label for="OrderID">Order ID:</label>
             <input type="text" class="form-control" name="OrderID" value="{{ order.OrderID|default_if_none:'' }}" required>
         </div>
+        {% endif %}
         <div class="form-group">
             <label for="CustomerID">Customer ID:</label>
             <input type="text" class="form-control" name="CustomerID" value="{{ order.CustomerID|default_if_none:'' }}" required>

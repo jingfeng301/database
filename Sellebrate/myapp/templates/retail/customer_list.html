@@ -4,6 +4,15 @@
 
 {% block content %}
 <h1 class="my-4">Customer List</h1>
+<div class="mb-4">
+    <form method="get" action="{% url 'customer_list' %}" class="form-inline">
+        <div class="form-group mx-sm-3 mb-2">
+            <label for="CustomerID" class="sr-only">Customer ID</label>
+            <input type="text" class="form-control" id="CustomerID" name="CustomerID" placeholder="Customer ID" value="{{ customer_id }}">
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Search</button>
+    </form>
+</div>
 <table class="table table-striped">
     <thead class="thead-dark">
         <tr>
@@ -20,7 +29,7 @@
     <tbody>
         {% for customer in page_obj %}
         <tr>
-            <td>{{ customer.CustomerID }}</td>
+            <td><a href="/customers/{{ customer.CustomerID }}">{{ customer.CustomerID }}</a></td>
             <td>{{ customer.Name }}</td>
             <td>{{ customer.Email }}</td>
             <td>{{ customer.ContactNumber }}</td>

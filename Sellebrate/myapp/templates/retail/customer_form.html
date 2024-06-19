@@ -7,10 +7,12 @@
     <h1 class="my-4">{% if customer %}Update Customer{% else %}Create Customer{% endif %}</h1>
     <form method="post">
         {% csrf_token %}
+        {% if not customer %}
         <div class="form-group">
             <label for="CustomerID">Customer ID:</label>
             <input type="text" class="form-control" name="CustomerID" value="{{ customer.CustomerID|default_if_none:'' }}" required>
         </div>
+        {% endif %}
         <div class="form-group">
             <label for="Name">Name:</label>
             <input type="text" class="form-control" name="Name" value="{{ customer.Name|default_if_none:'' }}" required>
@@ -33,7 +35,7 @@
         </div>
         <div class="form-group">
             <label for="LastPurchaseDate">Last Purchase Date:</label>
-            <input type="date" class="form-control" name="LastPurchaseDate" value="{{ customer.LastPurchaseDate|date:'Y-m-d'|default_if_none:'' }}" required>
+            <input type="date" class="form-control" name="LastPurchaseDate" value="{{ customer.LastPurchaseDate|date:'Y-m-d'|default_if_none:'' }}">
         </div>
         <button type="submit" class="btn btn-primary">{% if customer %}Update{% else %}Create{% endif %}</button>
     </form>

@@ -1,48 +1,18 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Order Detail</title>
-    <style>
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-        table, th, td {
-            border: 1px solid black;
-        }
-        th, td {
-            padding: 8px;
-            text-align: left;
-        }
-        th {
-            background-color: #f2f2f2;
-        }
-    </style>
-</head>
-<body>
-    <h1>Order Detail for Order {{ order.OrderID }}</h1>
-    <table>
-        <thead>
-            <tr>
-                <th>Product ID</th>
-                <th>Quantity</th>
-                <th>Unit Price($)</th>
-                <th>Total Amount($)</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for detail in order_details %}
-            <tr>
-                <td>{{ detail.ProductID.ProductID }}</td>
-                <td>{{ detail.Quantity }}</td>
-                <td>{{ detail.UnitPrice }}</td>
-                <td>{{ order.TotalAmount }}</td>
+{% extends "retail/base.html" %}
 
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    <br>
-    <a href="{% url 'order_list' %}">Back to Orders</a>
-</body>
-</html>
+{% block title %}Order Detail - Sellebrate{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Order Detail</h1>
+    <ul class="list-group">
+        <li class="list-group-item"><strong>Order ID:</strong> {{ order.OrderID }}</li>
+        <li class="list-group-item"><strong>Customer ID:</strong> {{ order.CustomerID }}</li>
+        <li class="list-group-item"><strong>Customer Name:</strong> {{ order.CustomerName }}</li>
+        <li class="list-group-item"><strong>Order Date:</strong> {{ order.OrderDate }}</li>
+        <li class="list-group-item"><strong>Total Amount:</strong> ${{ order.TotalAmount|floatformat:2 }}</li>
+        <li class="list-group-item"><strong>Shipping Address:</strong> {{ order.ShippingAddress }}</li>
+    </ul>
+    <a href="{% url 'order_list' %}" class="btn btn-secondary mt-3">Back to Orders List</a>
+</div>
+{% endblock %}
