@@ -1,0 +1,19 @@
+{% extends "retail/base.html" %}
+
+{% block title %}Customer Detail - Sellebrate{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Customer Detail</h1>
+    <ul class="list-group">
+        <li class="list-group-item"><strong>Customer ID:</strong> {{ customer.CustomerID }}</li>
+        <li class="list-group-item"><strong>Name:</strong> {{ customer.Name }}</li>
+        <li class="list-group-item"><strong>Email:</strong> {{ customer.Email }}</li>
+        <li class="list-group-item"><strong>Contact Number:</strong> {{ customer.ContactNumber }}</li>
+        <li class="list-group-item"><strong>Address:</strong> {{ customer.Address }}</li>
+        <li class="list-group-item"><strong>Country:</strong> {{ customer.Country }}</li>
+        <li class="list-group-item"><strong>Last Purchase Date:</strong> {{ customer.LastPurchaseDate }}</li>
+    </ul>
+    <a href="{% url 'customer_list' %}" class="btn btn-secondary mt-3">Back to Customers List</a>
+</div>
+{% endblock %}

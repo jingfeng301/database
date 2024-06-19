@@ -701,6 +701,254 @@ def order_list(request):
 
     return render(request, 'retail/order_list.html', {'page_obj': page_obj})
 
+@login_required
+def order_create(request):
+    if request.method == 'POST':
+        order_id = request.POST.get('OrderID')
+        customer_id = request.POST.get('CustomerID')
+        order_date = request.POST.get('OrderDate')
+        total_amount = request.POST.get('TotalAmount')
+        shipping_address = request.POST.get('ShippingAddress')
+        
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress)
+                VALUES (%s, %s, %s, %s, %s)
+            """, [order_id, customer_id, order_date, total_amount, shipping_address])
+        
+        messages.success(request, 'Order successfully created!')
+        return redirect('order_list')
+    return render(request, 'retail/order_form.html')
+
+@login_required
+def order_detail(request, order_id):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress
+            FROM orders o
+            JOIN customers c ON o.CustomerID = c.CustomerID
+            WHERE o.OrderID = %s
+        """, [order_id])
+        
+        order = cursor.fetchone()
+
+        if order is None:
+            return HttpResponse("Order not found", status=404)
+        
+        order_detail = {
+            'OrderID': order[0],
+            'CustomerID': order[1],
+            'CustomerName': order[2],
+            'OrderDate': order[3],
+            'TotalAmount': order[4],
+            'ShippingAddress': order[5],
+        }
+
+        return render(request, 'retail/order_detail.html', {'order': order_detail})
+
+@login_required
+def order_delete(request, order_id):
+    with connection.cursor() as cursor:
+        cursor.execute("START TRANSACTION")
+        cursor.execute("DELETE FROM transactions WHERE OrderID = %s", [order_id])
+        cursor.execute("DELETE FROM orderdetails WHERE OrderID = %s", [order_id])
+        cursor.execute("DELETE FROM orders WHERE OrderID = %s", [order_id])
+        cursor.execute("COMMIT")
+    
+    messages.success(request, 'Order successfully deleted!')
+    return redirect('order_list')
+
+@login_required
+def order_update(request, order_id):
+    if request.method == 'POST':
+        customer_id = request.POST.get('CustomerID')
+        order_date = request.POST.get('OrderDate')
+        total_amount = request.POST.get('TotalAmount')
+        shipping_address = request.POST.get('ShippingAddress')
+        
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE orders
+                SET CustomerID = %s, OrderDate = %s, TotalAmount = %s, ShippingAddress = %s
+                WHERE OrderID = %s
+            """, [customer_id, order_date, total_amount, shipping_address, order_id])
+        
+        messages.success(request, 'Order successfully updated!')
+        return redirect('order_list')
+    
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress
+            FROM orders
+            WHERE OrderID = %s
+        """, [order_id])
+        order = cursor.fetchone()
+
+    if order is None:
+        return HttpResponse("Order not found", status=404)
+
+    order_detail = {
+        'OrderID': order[0],
+        'CustomerID': order[1],
+        'OrderDate': order[2],
+        'TotalAmount': order[3],
+        'ShippingAddress': order[4],
+    }
+
+    return render(request, 'retail/order_form.html', {'order': order_detail})
+
+#Customer Management - View customer details/Create new customer/Update customer details/Delete customer
+@login_required
+def customer_list(request):
+    customer_name = request.GET.get('Name', '')
+    customer_id = request.GET.get('CustomerID', '')
+
+    sql_query = """
+        SELECT CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate
+        FROM customers
+        WHERE (Name LIKE %s OR %s = '')
+            AND (CustomerID LIKE %s OR %s = '')
+        ORDER BY Name
+    """
+    
+    params = [f"%{customer_name}%", customer_name, f"%{customer_id}%", customer_id]
+
+    with connection.cursor() as cursor:
+        cursor.execute(sql_query, params)
+        results = cursor.fetchall()
+
+    customers = [
+        {
+            'CustomerID': row[0],
+            'Name': row[1],
+            'Email': row[2],
+            'ContactNumber': row[3],
+            'Address': row[4],
+            'Country': row[5],
+            'LastPurchaseDate': row[6],
+        }
+        for row in results
+    ]
+
+    paginator = Paginator(customers, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'retail/customer_list.html', {
+        'page_obj': page_obj,
+        'customer_name': customer_name,
+        'customer_id': customer_id
+    })
+
+@login_required
+def customer_create(request):
+    if request.method == 'POST':
+        customer_id = request.POST.get('CustomerID')
+        name = request.POST.get('Name')
+        email = request.POST.get('Email')
+        contact_number = request.POST.get('ContactNumber')
+        address = request.POST.get('Address')
+        country = request.POST.get('Country')
+        last_purchase_date = request.POST.get('LastPurchaseDate')
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                INSERT INTO customers (CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate)
+                VALUES (%s, %s, %s, %s, %s, %s, %s)
+            """, [customer_id, name, email, contact_number, address, country, last_purchase_date])
+        
+        messages.success(request, 'Customer successfully created!')
+        return redirect('customer_list')
+    return render(request, 'retail/customer_form.html')
+
+@login_required
+def customer_detail(request, customer_id):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate
+            FROM customers
+            WHERE CustomerID = %s
+        """, [customer_id])
+        
+        customer = cursor.fetchone()
+
+        if customer is None:
+            return HttpResponse("Customer not found", status=404)
+        
+        customer_detail = {
+            'CustomerID': customer[0],
+            'Name': customer[1],
+            'Email': customer[2],
+            'ContactNumber': customer[3],
+            'Address': customer[4],
+            'Country': customer[5],
+            'LastPurchaseDate': customer[6],
+        }
+
+        return render(request, 'retail/customer_detail.html', {'customer': customer_detail})
+    
+@login_required
+def customer_delete(request, customer_id):
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT COUNT(*) FROM orders WHERE CustomerID = %s", [customer_id])
+        order_count = cursor.fetchone()[0]
+
+        if order_count > 0:
+            messages.error(request, 'Cannot delete customer with existing orders.')
+            return redirect('customer_list')
+
+        cursor.execute("START TRANSACTION")
+        cursor.execute("DELETE FROM customers WHERE CustomerID = %s", [customer_id])
+        cursor.execute("COMMIT")
+    
+    messages.success(request, 'Customer successfully deleted!')
+    return redirect('customer_list')
+
+@login_required
+def customer_update(request, customer_id):
+    if request.method == 'POST':
+        customer_id = request.POST.get('CustomerID')
+        name = request.POST.get('Name')
+        email = request.POST.get('Email')
+        contact_number = request.POST.get('ContactNumber')
+        address = request.POST.get('Address')
+        country = request.POST.get('Country')
+        last_purchase_date = request.POST.get('LastPurchaseDate')
+
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                UPDATE customers
+                SET Name = %s, Email = %s, ContactNumber = %s, Address = %s, Country = %s, LastPurchaseDate = %s
+                WHERE CustomerID = %s
+            """, [name, email, contact_number, address, country, last_purchase_date, customer_id])
+        
+        messages.success(request, 'Customer successfully updated!')
+        return redirect('customer_list')
+    else:
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate
+                FROM customers
+                WHERE CustomerID = %s
+            """, [customer_id])
+            
+            customer = cursor.fetchone()
+
+            if customer is None:
+                return HttpResponse("Customer not found", status=404)
+            
+            customer_detail = {
+                'CustomerID': customer[0],
+                'Name': customer[1],
+                'Email': customer[2],
+                'ContactNumber': customer[3],
+                'Address': customer[4],
+                'Country': customer[5],
+                'LastPurchaseDate': customer[6],
+            }
+        
+    return render(request, 'retail/customer_form.html', {'customer': customer_detail})
+
 
 # def order_status(request, order_id):
 #     with connection.cursor() as cursor:

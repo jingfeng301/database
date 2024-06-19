@@ -1,33 +1,35 @@
 {% extends "retail/base.html" %}
 
-{% block title %}Order List - Sellebrate{% endblock %}
+{% block title %}Customer List - Sellebrate{% endblock %}
 
 {% block content %}
-<h1 class="my-4">View Past Orders</h1>
+<h1 class="my-4">Customer List</h1>
 <table class="table table-striped">
     <thead class="thead-dark">
         <tr>
-            <th>Order ID</th>
             <th>Customer ID</th>
-            <th>Customer Name</th>
-            <th>Order Date</th>
-            <th>Total Amount ($)</th>
-            <th>Shipping Address</th>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Contact Number</th>
+            <th>Address</th>
+            <th>Country</th>
+            <th>Last Purchase Date</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-        {% for order in page_obj %}
+        {% for customer in page_obj %}
         <tr>
-            <td>{{ order.OrderID }}</td>
-            <td>{{ order.CustomerID }}</td>
-            <td>{{ order.CustomerName }}</td>
-            <td>{{ order.OrderDate }}</td>
-            <td>{{ order.TotalAmount|floatformat:2 }}</td>
-            <td>{{ order.ShippingAddress }}</td>
+            <td>{{ customer.CustomerID }}</td>
+            <td>{{ customer.Name }}</td>
+            <td>{{ customer.Email }}</td>
+            <td>{{ customer.ContactNumber }}</td>
+            <td>{{ customer.Address }}</td>
+            <td>{{ customer.Country }}</td>
+            <td>{{ customer.LastPurchaseDate }}</td>
             <td>
-                <a href="{% url 'order_update' order.OrderID %}" class="btn btn-sm btn-warning">Edit</a>
-                <form method="post" action="{% url 'order_delete' order.OrderID %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this order?');">
+                <a href="{% url 'customer_update' customer.CustomerID %}" class="btn btn-sm btn-warning">Edit</a>
+                <form method="post" action="{% url 'customer_delete' customer.CustomerID %}" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this customer?');">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-sm btn-danger">Delete</button>
                 </form>

@@ -1,0 +1,18 @@
+{% extends "retail/base.html" %}
+
+{% block title %}Order Detail - Sellebrate{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Order Detail</h1>
+    <ul class="list-group">
+        <li class="list-group-item"><strong>Order ID:</strong> {{ order.OrderID }}</li>
+        <li class="list-group-item"><strong>Customer ID:</strong> {{ order.CustomerID }}</li>
+        <li class="list-group-item"><strong>Customer Name:</strong> {{ order.CustomerName }}</li>
+        <li class="list-group-item"><strong>Order Date:</strong> {{ order.OrderDate }}</li>
+        <li class="list-group-item"><strong>Total Amount:</strong> ${{ order.TotalAmount|floatformat:2 }}</li>
+        <li class="list-group-item"><strong>Shipping Address:</strong> {{ order.ShippingAddress }}</li>
+    </ul>
+    <a href="{% url 'order_list' %}" class="btn btn-secondary mt-3">Back to Orders List</a>
+</div>
+{% endblock %}

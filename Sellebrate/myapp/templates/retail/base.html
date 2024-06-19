@@ -73,8 +73,10 @@
                     <a href="{% url 'inventory_list' %}" class="{% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}">View Inventory</a>
                     <a href="{% url 'product_list' %}" class="{% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">View All Product</a>
                     <a href="{% url 'order_list' %}" class="{% if request.resolver_match.url_name == 'order_list' %}active{% endif %}">View Past Orders</a>
+                    <a href="{% url 'customer_list' %}" class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">View Customers</a>
                     <a href="{% url 'product_create' %}" class="{% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">Add a new Product</a>
-                    <a href="#" class="{% if request.resolver_match.url_name == 'order_create' %}active{% endif %}">Add Order</a>
+                    <a href="{% url 'order_create' %}" class="{% if request.resolver_match.url_name == 'order_create' %}active{% endif %}">Add Order</a>
+                    <a href="{% url 'customer_create' %}" class="{% if request.resolver_match.url_name == 'customer_create' %}active{% endif %}">Add Customer</a>
                 </div>
             </nav>
 
