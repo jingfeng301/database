@@ -42,6 +42,108 @@
             </div>
         </div>
     </div>
+    
+    <h2>Total Sales and Quantity Sold by Product</h2>
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Product ID</th>
+                <th>Product Name</th>
+                <th>Total Units Sold</th>
+                <th>Total Sales ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in insights.total_sales_data %}
+            <tr>
+                <td>{{ item.ProductID }}</td>
+                <td>{{ item.ProductName }}</td>
+                <td>{{ item.TotalUnitsSold }}</td>
+                <td>{{ item.TotalSales }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Best Selling Products Per Category</h2>
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Category</th>
+                <th>Product ID</th>
+                <th>Product Name</th>
+                <th>Total Sales ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in insights.best_selling_per_category %}
+            <tr>
+                <td>{{ item.Category }}</td>
+                <td>{{ item.ProductID }}</td>
+                <td>{{ item.ProductName }}</td>
+                <td>{{ item.TotalSales }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Total Sales Per Product Category</h2>
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Category</th>
+                <th>Total Sales ($)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in insights.total_sales_per_category %}
+            <tr>
+                <td>{{ item.Category }}</td>
+                <td>{{ item.TotalSales }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Products Not Sold in the Last Month</h2>
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Product ID</th>
+                <th>Product Name</th>
+                <th>Category</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in insights.products_not_sold_last_month %}
+            <tr>
+                <td>{{ item.ProductID }}</td>
+                <td>{{ item.ProductName }}</td>
+                <td>{{ item.Category }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h2>Customers Without Recent Transactions (Past 1 Year)</h2>
+    <table class="table table-striped">
+        <thead class="thead-dark">
+            <tr>
+                <th>Customer ID</th>
+                <th>Name</th>
+                <th>Email</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in insights.customers_without_recent_transactions %}
+            <tr>
+                <td>{{ item.CustomerID }}</td>
+                <td>{{ item.Name }}</td>
+                <td>{{ item.Email }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
     {% else %}
     <p>Please log in to view insights and analytics.</p>
     {% endif %}

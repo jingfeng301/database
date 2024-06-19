@@ -1,0 +1,32 @@
+{% extends "retail/base.html" %}
+
+{% block title %}Product Detail - Sellebrate{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Product Details</h1>
+    <table class="table table-bordered">
+        <tr>
+            <th>Product ID</th>
+            <td>{{ product.ProductID }}</td>
+        </tr>
+        <tr>
+            <th>Product Name</th>
+            <td>{{ product.ProductName }}</td>
+        </tr>
+        <tr>
+            <th>Category</th>
+            <td>{{ product.Category }}</td>
+        </tr>
+        <tr>
+            <th>Description</th>
+            <td>{{ product.ProductDescription }}</td>
+        </tr>
+        <tr>
+            <th>Unit Price</th>
+            <td>${{ product.UnitPrice|floatformat:2 }}</td>
+        </tr>
+    </table>
+    <a href="{% url 'product_list' %}" class="btn btn-primary">Back to Product List</a>
+</div>
+{% endblock %}

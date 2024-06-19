@@ -40,6 +40,15 @@
         .active {
             background-color: #495057;
         }
+        table.table-bordered {
+            border-color: rgb(0, 0, 0);
+        }
+        table.table-bordered th{
+            border-color: rgb(3, 3, 3);
+        }
+        table.table-bordered td {
+            border-color: rgb(3, 3, 3);
+        }
     </style>
 </head>
 <body>
@@ -61,14 +70,22 @@
                 <div class="sidebar-sticky">
                     <h5 class="text-white text-center">Navigation</h5>
                     <a href="{% url 'index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Dashboard</a>
-                    <a href="{% url 'product_list' %}" class="{% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">View All Products</a>
+                    <a href="{% url 'inventory_list' %}" class="{% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}">View Inventory</a>
+                    <a href="{% url 'product_list' %}" class="{% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">View All Product</a>
                     <a href="{% url 'order_list' %}" class="{% if request.resolver_match.url_name == 'order_list' %}active{% endif %}">View Past Orders</a>
-                    <a href="#" class="{% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">Add a Product</a>
-                    <a href="#" class="{% if request.resolver_match.url_name == 'order_create' %}active{% endif %}">Add an Order</a>
+                    <a href="{% url 'product_create' %}" class="{% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">Add a new Product</a>
+                    <a href="#" class="{% if request.resolver_match.url_name == 'order_create' %}active{% endif %}">Add Order</a>
                 </div>
             </nav>
 
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 main-content">
+                {% if messages %}
+                    <div class="alert alert-success" role="alert">
+                        {% for message in messages %}
+                            <div>{{ message }}</div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
                 {% block content %}
                 {% endblock %}
             </main>

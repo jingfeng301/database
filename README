@@ -18,3 +18,5 @@ CREATE TABLE users (
 
 
 for login and register page
+
+Please do python manage.py migrate to add in Product Description. Miss out on this.

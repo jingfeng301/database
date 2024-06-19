@@ -4,6 +4,22 @@
 
 {% block content %}
 <h1 class="my-4">Product List</h1>
+<div class="mb-4">
+    <a href="{% url 'product_create' %}" class="btn btn-success">Create a Product</a>
+</div>
+<div class="mb-4">
+    <form method="get" action="{% url 'product_list' %}" class="form-inline">
+        <div class="form-group mx-sm-3 mb-2">
+            <label for="ProductName" class="sr-only">Product Name</label>
+            <input type="text" class="form-control" id="ProductName" name="ProductName" placeholder="Product Name" value="{{ product_name }}">
+        </div>
+        <div class="form-group mx-sm-3 mb-2">
+            <label for="ProductID" class="sr-only">Product ID</label>
+            <input type="text" class="form-control" id="ProductID" name="ProductID" placeholder="Product ID" value="{{ product_id }}">
+        </div>
+        <button type="submit" class="btn btn-primary mb-2">Search</button>
+    </form>
+</div>
 <table class="table table-striped">
     <thead class="thead-dark">
         <tr>
@@ -11,21 +27,22 @@
             <th>Product Name</th>
             <th>Category</th>
             <th>Unit Price ($)</th>
+            <th>Description</th>
             <th>Actions</th>
         </tr>
     </thead>
     <tbody>
         {% for product in page_obj %}
         <tr>
-            <td>{{ product.ProductID }}</td>
+            <td><a href="{% url 'product_detail' product.ProductID %}">{{ product.ProductID }}</a></td>
             <td>{{ product.ProductName }}</td>
             <td>{{ product.Category }}</td>
-            <td>{{ product.UnitPrice }}</td>
-            <td class="text-center">
-                <div class="btn-group" role="group">
-                    <a href="#" class="btn btn-warning">Edit</a>
-                    <a href="#" class="btn btn-danger">Delete</a>
-                </div>
+            <td>{{ product.UnitPrice|floatformat:2 }}</td>
+            <td>{{ product.ProductDescription }}</td>
+            <td>
+                <a href="{% url 'product_update_price' product.ProductID %}" class="btn btn-sm btn-primary">Edit Price</a>
+                <a href="{% url 'product_update_description' product.ProductID %}" class="btn btn-sm btn-secondary">Edit Description</a>
+                <a href="{% url 'product_delete' product.ProductID %}" class="btn btn-sm btn-danger">Delete</a>
             </td>
         </tr>
         {% endfor %}
@@ -34,8 +51,8 @@
 <nav>
     <ul class="pagination justify-content-center">
         {% if page_obj.has_previous %}
-            <li class="page-item"><a class="page-link" href="?page=1">&laquo; First</a></li>
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}">Previous</a></li>
+            <li class="page-item"><a class="page-link" href="?page=1&ProductName={{ product_name }}&ProductID={{ product_id }}">&laquo; First</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.previous_page_number }}&ProductName={{ product_name }}&ProductID={{ product_id }}">Previous</a></li>
         {% else %}
             <li class="page-item disabled"><a class="page-link">&laquo; First</a></li>
             <li class="page-item disabled"><a class="page-link">Previous</a></li>
@@ -45,13 +62,13 @@
             {% if page_obj.number == num %}
                 <li class="page-item active"><a class="page-link">{{ num }}</a></li>
             {% elif num > page_obj.number|add:'-5' and num < page_obj.number|add:'5' %}
-                <li class="page-item"><a class="page-link" href="?page={{ num }}">{{ num }}</a></li>
+                <li class="page-item"><a class="page-link" href="?page={{ num }}&ProductName={{ product_name }}&ProductID={{ product_id }}">{{ num }}</a></li>
             {% endif %}
         {% endfor %}
 
         {% if page_obj.has_next %}
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}">Next</a></li>
-            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}">Last &raquo;</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.next_page_number }}&ProductName={{ product_name }}&ProductID={{ product_id }}">Next</a></li>
+            <li class="page-item"><a class="page-link" href="?page={{ page_obj.paginator.num_pages }}&ProductName={{ product_name }}&ProductID={{ product_id }}">Last &raquo;</a></li>
         {% else %}
             <li class="page-item disabled"><a class="page-link">Next</a></li>
             <li class="page-item disabled"><a class="page-link">Last &raquo;</a></li>

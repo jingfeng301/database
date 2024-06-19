@@ -1,0 +1,17 @@
+{% extends "retail/base.html" %}
+
+{% block title %}Update Product Description - Sellebrate{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Update Product Description</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="Description">New Description:</label>
+            <textarea class="form-control" id="Description" name="Description" required></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Description</button>
+    </form>
+</div>
+{% endblock %}

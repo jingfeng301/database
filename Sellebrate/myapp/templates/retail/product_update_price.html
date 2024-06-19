@@ -1,0 +1,17 @@
+{% extends "retail/base.html" %}
+
+{% block title %}Update Product Price - Sellebrate{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Update Product Price</h1>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="UnitPrice">New Unit Price:</label>
+            <input type="number" step="0.01" class="form-control" id="UnitPrice" name="UnitPrice" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Update Price</button>
+    </form>
+</div>
+{% endblock %}

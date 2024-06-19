@@ -1,29 +1,29 @@
 {% extends "retail/base.html" %}
 
-{% block title %}Order List - Sellebrate{% endblock %}
+{% block title %}Inventory List - Sellebrate{% endblock %}
 
 {% block content %}
-<h1 class="my-4">View Past Orders</h1>
+<h1 class="my-4">Inventory List</h1>
 <table class="table table-striped">
     <thead class="thead-dark">
         <tr>
-            <th>Order ID</th>
-            <th>Customer ID</th>
-            <th>Customer Name</th>
-            <th>Order Date</th>
-            <th>Total Amount ($)</th>
-            <th>Shipping Address</th>
+            <th>Product ID</th>
+            <th>Product Name</th>
+            <th>Stock Quantity</th>
+            <th>Last Restocked</th>
+            <th>Actions</th>
         </tr>
     </thead>
     <tbody>
-        {% for order in page_obj %}
+        {% for item in page_obj %}
         <tr>
-            <td>{{ order.OrderID }}</td>
-            <td>{{ order.CustomerID }}</td>
-            <td>{{ order.CustomerName }}</td>
-            <td>{{ order.OrderDate }}</td>
-            <td>{{ order.TotalAmount|floatformat:2 }}</td>
-            <td>{{ order.ShippingAddress }}</td>
+            <td>{{ item.ProductID }}</td>
+            <td>{{ item.ProductName }}</td>
+            <td>{{ item.StockQuantity }}</td>
+            <td>{{ item.LastRestocked }}</td>
+            <td>
+                <a href="{% url 'inventory_update' item.ProductID %}" class="btn btn-sm btn-primary">Update Stock</a>
+            </td>
         </tr>
         {% endfor %}
     </tbody>
