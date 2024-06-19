@@ -30,14 +30,14 @@ Please do python manage.py migrate to add in Product Description. Miss out on th
 
 Copy and paste the script in your database CLI and run it to seed your database.
 
+```
+./Sellebrate/myapp/migrations/seed.sql
+```
+
 # Local Development
 
 ```
 python manage.py runserver
-```
-
-```
-./Sellebrate/myapp/migrations/seed.sql
 ```
 
 # To Do
