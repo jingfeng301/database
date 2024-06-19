@@ -6,7 +6,7 @@ Hence, Sell-ebrate seeks to sell and manage products using a web application to 
 
 # Dependencies
 
-Remember to update your DB credentials in .env
+Copy and paste .env.template to .env and update your DB credentials in .env
 
 ```
 pip install django django-environ mysqlclient
