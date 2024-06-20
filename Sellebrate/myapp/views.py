@@ -44,7 +44,8 @@ def user_login(request):
             request.session['username'] = username
             return redirect('index')
         else:
-            return HttpResponse('Invalid login details')
+            messages.error(request, 'Invalid login details')
+            return render(request, 'retail/login.html')
     return render(request, 'retail/login.html')
 
 def user_logout(request):
@@ -139,6 +140,14 @@ def index(request):
         arpu = cursor.fetchone()[0]
         insights['arpu'] = round(arpu, 2) if arpu is not None else 0.00
         
+        # Average order value
+        cursor.execute("""
+            SELECT AVG(TotalAmount) AS AOV
+            FROM orders
+        """)
+        aov = cursor.fetchone()[0]
+        insights['aov'] = round(aov, 2) if aov is not None else 0.00
+
         # Customer retention rate
         cursor.execute("""
             SELECT COUNT(DISTINCT CustomerID) AS RetainedCustomers
@@ -669,10 +678,9 @@ def product_update_description(request, product_id):
 def order_list(request):
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress, o.UserID
+            SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress
             FROM orders o
             JOIN customers c ON o.CustomerID = c.CustomerID
-            LEFT JOIN users u ON o.UserID = u.UserID
         """)
         results = cursor.fetchall()
 
@@ -684,7 +692,6 @@ def order_list(request):
             'OrderDate': row[3],
             'TotalAmount': row[4],
             'ShippingAddress': row[5],
-            'UserID': row[6]
         }
         for row in results
     ]
@@ -703,16 +710,51 @@ def order_create(request):
         order_date = request.POST.get('OrderDate')
         total_amount = request.POST.get('TotalAmount')
         shipping_address = request.POST.get('ShippingAddress')
-        user_id = request.user.id
         
         with connection.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress, UserID)
-                VALUES (%s, %s, %s, %s, %s, %s)
-            """, [order_id, customer_id, order_date, total_amount, shipping_address, user_id])
-        
-        messages.success(request, 'Order successfully created!')
+            # Check if the CustomerID exists
+            cursor.execute("SELECT COUNT(*) FROM customers WHERE CustomerID = %s", [customer_id])
+            customer_exists = cursor.fetchone()[0]
+            
+            if not customer_exists:
+                messages.error(request, 'Error: Customer ID does not exist.')
+                return render(request, 'retail/order_form.html')
+            
+            cursor.execute("SELECT COUNT(*) FROM orders WHERE OrderID = %s", [order_id])
+            order_exists = cursor.fetchone()[0]
+            
+            if order_exists:
+                messages.error(request, 'Error: Order ID already exists.')
+                return render(request, 'retail/order_form.html')
+
+            try:
+                cursor.execute("START TRANSACTION")
+                # Insert the new order
+                cursor.execute("""
+                    INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress)
+                    VALUES (%s, %s, %s, %s, %s)
+                """, [order_id, customer_id, order_date, total_amount, shipping_address])
+                
+                # Update the customer's last purchase date to the latest order date
+                cursor.execute("""
+                    UPDATE customers
+                    SET LastPurchaseDate = (
+                        SELECT MAX(OrderDate)
+                        FROM orders
+                        WHERE CustomerID = %s
+                    )
+                    WHERE CustomerID = %s
+                """, [customer_id, customer_id])
+
+                cursor.execute("COMMIT")
+                messages.success(request, 'Order successfully created!')
+            except Exception as e:
+                cursor.execute("ROLLBACK")
+                messages.error(request, f'An error occurred while creating the order: {str(e)}')
+                return render(request, 'retail/order_form.html')
+            
         return redirect('order_list')
+    
     return render(request, 'retail/order_form.html')
 
 @login_required
@@ -744,13 +786,51 @@ def order_detail(request, order_id):
 @login_required
 def order_delete(request, order_id):
     with connection.cursor() as cursor:
-        cursor.execute("START TRANSACTION")
-        cursor.execute("DELETE FROM transactions WHERE OrderID = %s", [order_id])
-        cursor.execute("DELETE FROM orderdetails WHERE OrderID = %s", [order_id])
-        cursor.execute("DELETE FROM orders WHERE OrderID = %s", [order_id])
-        cursor.execute("COMMIT")
+        try:
+            cursor.execute("START TRANSACTION")
+            
+            cursor.execute("SELECT CustomerID FROM orders WHERE OrderID = %s", [order_id])
+            customer_id = cursor.fetchone()
+            
+            if not customer_id:
+                messages.error(request, 'Order not found.')
+                return redirect('order_list')
+            
+            customer_id = customer_id[0]
+            
+            cursor.execute("DELETE FROM transactions WHERE OrderID = %s", [order_id])
+            cursor.execute("DELETE FROM orderdetails WHERE OrderID = %s", [order_id])
+            cursor.execute("DELETE FROM orders WHERE OrderID = %s", [order_id])
+            
+            # Update the customer's last purchase date to the latest order date
+            cursor.execute("""
+                UPDATE customers
+                SET LastPurchaseDate = (
+                    SELECT MAX(OrderDate)
+                    FROM orders
+                    WHERE CustomerID = %s
+                )
+                WHERE CustomerID = %s
+            """, [customer_id, customer_id])
+            
+            cursor.execute("""
+                SELECT COUNT(*) FROM orders WHERE CustomerID = %s
+            """, [customer_id])
+            remaining_orders = cursor.fetchone()[0]
+            
+            if remaining_orders == 0:
+                cursor.execute("""
+                    UPDATE customers
+                    SET LastPurchaseDate = NULL
+                    WHERE CustomerID = %s
+                """, [customer_id])
+            
+            cursor.execute("COMMIT")
+            messages.success(request, 'Order successfully deleted!')
+        except Exception as e:
+            cursor.execute("ROLLBACK")
+            messages.error(request, f'An error occurred while deleting the order: {str(e)}')
     
-    messages.success(request, 'Order successfully deleted!')
     return redirect('order_list')
 
 @login_required
@@ -760,17 +840,54 @@ def order_update(request, order_id):
         order_date = request.POST.get('OrderDate')
         total_amount = request.POST.get('TotalAmount')
         shipping_address = request.POST.get('ShippingAddress')
-        
+
         with connection.cursor() as cursor:
-            cursor.execute("""
-                UPDATE orders
-                SET CustomerID = %s, OrderDate = %s, TotalAmount = %s, ShippingAddress = %s
-                WHERE OrderID = %s
-            """, [customer_id, order_date, total_amount, shipping_address, order_id])
-        
-        messages.success(request, 'Order successfully updated!')
-        return redirect('order_list')
-    
+            cursor.execute("SELECT COUNT(*) FROM customers WHERE CustomerID = %s", [customer_id])
+            customer_exists = cursor.fetchone()[0]
+
+            if not customer_exists:
+                messages.error(request, 'Error: Customer ID does not exist.')
+                return render(request, 'retail/order_form.html', {'order': {
+                    'CustomerID': customer_id,
+                    'OrderDate': order_date,
+                    'TotalAmount': total_amount,
+                    'ShippingAddress': shipping_address
+                }})
+
+            try:
+                cursor.execute("START TRANSACTION")
+
+                cursor.execute("""
+                    UPDATE orders
+                    SET CustomerID = %s, OrderDate = %s, TotalAmount = %s, ShippingAddress = %s
+                    WHERE OrderID = %s
+                """, [customer_id, order_date, total_amount, shipping_address, order_id])
+
+                # Update the customer's last purchase date to the latest order date
+                cursor.execute("""
+                    UPDATE customers
+                    SET LastPurchaseDate = (
+                        SELECT MAX(OrderDate)
+                        FROM orders
+                        WHERE CustomerID = %s
+                    )
+                    WHERE CustomerID = %s
+                """, [customer_id, customer_id])
+
+                cursor.execute("COMMIT")
+                messages.success(request, 'Order successfully updated!')
+                return redirect('order_list')
+
+            except Exception as e:
+                cursor.execute("ROLLBACK")
+                messages.error(request, f'An error occurred while updating the order: {str(e)}')
+                return render(request, 'retail/order_form.html', {'order': {
+                    'CustomerID': customer_id,
+                    'OrderDate': order_date,
+                    'TotalAmount': total_amount,
+                    'ShippingAddress': shipping_address
+                }})
+
     with connection.cursor() as cursor:
         cursor.execute("""
             SELECT OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress
@@ -847,10 +964,16 @@ def customer_create(request):
         last_purchase_date = request.POST.get('LastPurchaseDate')
 
         with connection.cursor() as cursor:
-            cursor.execute("""
-                INSERT INTO customers (CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate)
-                VALUES (%s, %s, %s, %s, %s, %s, %s)
-            """, [customer_id, name, email, contact_number, address, country, last_purchase_date])
+            if last_purchase_date:
+                cursor.execute("""
+                    INSERT INTO customers (CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s)
+                """, [customer_id, name, email, contact_number, address, country, last_purchase_date])
+            else:
+                cursor.execute("""
+                    INSERT INTO customers (CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate)
+                    VALUES (%s, %s, %s, %s, %s, %s, NULL)
+                """, [customer_id, name, email, contact_number, address, country])
         
         messages.success(request, 'Customer successfully created!')
         return redirect('customer_list')
@@ -902,7 +1025,6 @@ def customer_delete(request, customer_id):
 @login_required
 def customer_update(request, customer_id):
     if request.method == 'POST':
-        customer_id = request.POST.get('CustomerID')
         name = request.POST.get('Name')
         email = request.POST.get('Email')
         contact_number = request.POST.get('ContactNumber')
@@ -911,18 +1033,25 @@ def customer_update(request, customer_id):
         last_purchase_date = request.POST.get('LastPurchaseDate')
 
         with connection.cursor() as cursor:
-            cursor.execute("""
-                UPDATE customers
-                SET Name = %s, Email = %s, ContactNumber = %s, Address = %s, Country = %s, LastPurchaseDate = %s
-                WHERE CustomerID = %s
-            """, [name, email, contact_number, address, country, last_purchase_date, customer_id])
+            if last_purchase_date:
+                cursor.execute("""
+                    UPDATE customers
+                    SET Name = %s, Email = %s, ContactNumber = %s, Address = %s, Country = %s, LastPurchaseDate = %s
+                    WHERE CustomerID = %s
+                """, [name, email, contact_number, address, country, last_purchase_date, customer_id])
+            else:
+                cursor.execute("""
+                    UPDATE customers
+                    SET Name = %s, Email = %s, ContactNumber = %s, Address = %s, Country = %s
+                    WHERE CustomerID = %s
+                """, [name, email, contact_number, address, country, customer_id])
         
         messages.success(request, 'Customer successfully updated!')
         return redirect('customer_list')
     else:
         with connection.cursor() as cursor:
             cursor.execute("""
-                SELECT CustomerID, Name, Email, ContactNumber, Address, Country, LastPurchaseDate
+                SELECT CustomerID, Name, Email, ContactNumber, Address, Country, DATE_FORMAT(LastPurchaseDate, '%%Y-%%m-%%d')
                 FROM customers
                 WHERE CustomerID = %s
             """, [customer_id])
