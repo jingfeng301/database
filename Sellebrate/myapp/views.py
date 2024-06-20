@@ -139,14 +139,6 @@ def index(request):
         arpu = cursor.fetchone()[0]
         insights['arpu'] = round(arpu, 2) if arpu is not None else 0.00
         
-        # Average order value
-        cursor.execute("""
-            SELECT AVG(TotalAmount) AS AOV
-            FROM orders
-        """)
-        aov = cursor.fetchone()[0]
-        insights['aov'] = round(aov, 2) if aov is not None else 0.00
-
         # Customer retention rate
         cursor.execute("""
             SELECT COUNT(DISTINCT CustomerID) AS RetainedCustomers
