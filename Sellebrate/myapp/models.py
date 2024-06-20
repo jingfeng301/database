@@ -17,6 +17,19 @@ class Customer(models.Model):
         verbose_name_plural = 'customers'
         ordering = ['CustomerID']
 
+class Users(models.Model):
+    UserID =  models.AutoField(primary_key=True)
+    Username = models.CharField(max_length=255)
+    Password = models.CharField(max_length=255)
+
+    def __str__(self):
+        return self.UserID
+
+    class Meta:
+        db_table = 'users'
+        verbose_name_plural = 'users'
+        ordering = ['UserID']
+
 class Product(models.Model):
     ProductID = models.CharField(max_length=512, primary_key=True)
     ProductName = models.CharField(max_length=512, null=True, blank=True)
@@ -51,6 +64,7 @@ class Order(models.Model):
     OrderDate = models.DateField(null=True, blank=True)
     TotalAmount = models.FloatField(null=True, blank=True)
     ShippingAddress = models.CharField(max_length=512, null=True, blank=True)
+    UserID = models.ForeignKey(Users, on_delete=models.CASCADE, db_column='UserID', null=True, blank=True )
 
     def __str__(self):
         return self.OrderID

@@ -669,9 +669,10 @@ def product_update_description(request, product_id):
 def order_list(request):
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress
+            SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress, o.UserID
             FROM orders o
             JOIN customers c ON o.CustomerID = c.CustomerID
+            LEFT JOIN users u ON o.UserID = u.UserID
         """)
         results = cursor.fetchall()
 
@@ -683,6 +684,7 @@ def order_list(request):
             'OrderDate': row[3],
             'TotalAmount': row[4],
             'ShippingAddress': row[5],
+            'UserID': row[6]
         }
         for row in results
     ]
@@ -701,12 +703,13 @@ def order_create(request):
         order_date = request.POST.get('OrderDate')
         total_amount = request.POST.get('TotalAmount')
         shipping_address = request.POST.get('ShippingAddress')
+        user_id = request.user.id
         
         with connection.cursor() as cursor:
             cursor.execute("""
-                INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress)
-                VALUES (%s, %s, %s, %s, %s)
-            """, [order_id, customer_id, order_date, total_amount, shipping_address])
+                INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress, UserID)
+                VALUES (%s, %s, %s, %s, %s, %s)
+            """, [order_id, customer_id, order_date, total_amount, shipping_address, user_id])
         
         messages.success(request, 'Order successfully created!')
         return redirect('order_list')

@@ -14,18 +14,6 @@ pip install django django-environ mysqlclient
 python manage.py migrate
 ```
 
-## Create a new table inside your DB
-
-```
-CREATE TABLE users (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    username VARCHAR(255) UNIQUE NOT NULL,
-    password VARCHAR(255) NOT NULL
-);
-```
-
-Please do python manage.py migrate to add in Product Description. Miss out on this.
-
 ## Seed Database with Dataset
 
 Copy and paste the script in your database CLI and run it to seed your database.
