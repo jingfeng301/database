@@ -796,7 +796,16 @@ def order_detail(request, order_id):
             'ShippingAddress': order[5],
         }
 
-        return render(request, 'retail/order_detail.html', {'order': order_detail})
+        cursor.execute("""
+            SELECT p.ProductName, od.Quantity
+            FROM orderdetails od
+            JOIN products p ON od.ProductID = p.ProductID
+            WHERE od.OrderID = %s
+        """, [order_id])
+
+        product_details = cursor.fetchall()
+
+        return render(request, 'retail/order_detail.html', {'order': order_detail, 'product_details': product_details})
 
 @login_required
 def order_delete(request, order_id):

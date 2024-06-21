@@ -13,6 +13,25 @@
         <li class="list-group-item"><strong>Total Amount:</strong> ${{ order.TotalAmount|floatformat:2 }}</li>
         <li class="list-group-item"><strong>Shipping Address:</strong> {{ order.ShippingAddress }}</li>
     </ul>
+
+    <h2 class="my-4">Products Purchased</h2>
+    <table class ="table table-striped">
+        <thead class = "thead-dark">
+            <tr>
+                <th>Product Name</th>
+                <th>Quantity</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for product in product_details %}
+            <tr>
+                <td> {{product.0}} </td>
+                <td> {{product.1}} </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    
     <a href="{% url 'order_list' %}" class="btn btn-secondary mt-3">Back to Orders List</a>
 </div>
 {% endblock %}
