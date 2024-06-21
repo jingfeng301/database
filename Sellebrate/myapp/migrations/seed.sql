@@ -734,6 +734,8 @@ INSERT INTO `customers` (`CustomerID`, `Name`, `Email`, `Contact Number`, `Addre
 ('ZC-21910', 'Zuschuss Carroll', 'zuschuss.carroll@gmail.com', '834-801-8290', '8911 Main St, Apt 46', 'United States'),
 ('ZD-21925', 'Zuschuss Donatelli', 'zuschuss.donatelli@gmail.com', '658-696-4425', '4425 Main St, Apt 55', 'United States');
 
+ALTER TABLE customers CHANGE COLUMN `Contact Number` `ContactNumber` VARCHAR(512);
+
 INSERT INTO `inventory` (`ProductID`, `StockQuantity`, `LastRestocked`) VALUES
 ('FUR-BO-10001798', 768, STR_TO_DATE('3/4/2024', '%m/%d/%Y'));
 INSERT INTO `inventory` (`ProductID`, `StockQuantity`, `LastRestocked`) VALUES

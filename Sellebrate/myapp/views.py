@@ -9,6 +9,8 @@ from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from .models import *
 from .forms import *
+import pandas as pd
+import tabulate
 
 #This will make the user be required to login before they can view the data
 def login_required(view_func):
@@ -718,6 +720,7 @@ def order_list(request):
 
 @login_required
 def order_create(request):
+    profiling_info = []
     if request.method == 'POST':
         order_id = request.POST.get('OrderID')
         customer_id = request.POST.get('CustomerID')
@@ -727,6 +730,8 @@ def order_create(request):
         user_id = request.user.id
         
         with connection.cursor() as cursor:
+            cursor.execute("SET profiling = 1;")
+
             # Check if the CustomerID exists
             cursor.execute("SELECT COUNT(*) FROM customers WHERE CustomerID = %s", [customer_id])
             customer_exists = cursor.fetchone()[0]
@@ -763,18 +768,27 @@ def order_create(request):
 
                 cursor.execute("COMMIT")
                 messages.success(request, 'Order successfully created!')
+                
+                profiling_info = get_profiling_info(cursor)
+                print_profiling_info(profiling_info)
+            
             except Exception as e:
                 cursor.execute("ROLLBACK")
                 messages.error(request, f'An error occurred while creating the order: {str(e)}')
+                print_profiling_info(profiling_info)
                 return render(request, 'retail/order_form.html')
             
+        print_profiling_info(profiling_info)
         return redirect('order_list')
     
+    print_profiling_info(profiling_info)
     return render(request, 'retail/order_form.html')
 
 @login_required
 def order_detail(request, order_id):
+    profiling_info = []
     with connection.cursor() as cursor:
+        cursor.execute("SET profiling = 1;")
         cursor.execute("""
             SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress
             FROM orders o
@@ -805,12 +819,17 @@ def order_detail(request, order_id):
 
         product_details = cursor.fetchall()
 
+        profiling_info = get_profiling_info(cursor)
+        print_profiling_info(profiling_info)
+
         return render(request, 'retail/order_detail.html', {'order': order_detail, 'product_details': product_details})
 
 @login_required
 def order_delete(request, order_id):
+    profiling_info = []
     with connection.cursor() as cursor:
         try:
+            cursor.execute("SET profiling = 1;")
             cursor.execute("START TRANSACTION")
             
             cursor.execute("SELECT CustomerID FROM orders WHERE OrderID = %s", [order_id])
@@ -851,6 +870,10 @@ def order_delete(request, order_id):
             
             cursor.execute("COMMIT")
             messages.success(request, 'Order successfully deleted!')
+
+            profiling_info = get_profiling_info(cursor)
+            print_profiling_info(profiling_info)
+
         except Exception as e:
             cursor.execute("ROLLBACK")
             messages.error(request, f'An error occurred while deleting the order: {str(e)}')
@@ -859,6 +882,7 @@ def order_delete(request, order_id):
 
 @login_required
 def order_update(request, order_id):
+    profiling_info = []
     if request.method == 'POST':
         customer_id = request.POST.get('CustomerID')
         order_date = request.POST.get('OrderDate')
@@ -866,6 +890,7 @@ def order_update(request, order_id):
         shipping_address = request.POST.get('ShippingAddress')
 
         with connection.cursor() as cursor:
+            cursor.execute("SET profiling = 1;")
             cursor.execute("SELECT COUNT(*) FROM customers WHERE CustomerID = %s", [customer_id])
             customer_exists = cursor.fetchone()[0]
 
@@ -875,7 +900,8 @@ def order_update(request, order_id):
                     'CustomerID': customer_id,
                     'OrderDate': order_date,
                     'TotalAmount': total_amount,
-                    'ShippingAddress': shipping_address
+                    'ShippingAddress': shipping_address,
+                    'profiling_info': profiling_info
                 }})
 
             try:
@@ -900,6 +926,8 @@ def order_update(request, order_id):
 
                 cursor.execute("COMMIT")
                 messages.success(request, 'Order successfully updated!')
+                profiling_info = get_profiling_info(cursor)
+                print_profiling_info(profiling_info)
                 return redirect('order_list')
 
             except Exception as e:
@@ -909,16 +937,20 @@ def order_update(request, order_id):
                     'CustomerID': customer_id,
                     'OrderDate': order_date,
                     'TotalAmount': total_amount,
-                    'ShippingAddress': shipping_address
+                    'ShippingAddress': shipping_address,
+                    'profiling_info': profiling_info
                 }})
 
     with connection.cursor() as cursor:
+        cursor.execute("SET profiling = 1;")
         cursor.execute("""
             SELECT OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress
             FROM orders
             WHERE OrderID = %s
         """, [order_id])
         order = cursor.fetchone()
+
+        profiling_info = get_profiling_info(cursor)
 
     if order is None:
         return HttpResponse("Order not found", status=404)
@@ -931,6 +963,7 @@ def order_update(request, order_id):
         'ShippingAddress': order[4],
     }
 
+    print_profiling_info(profiling_info)
     return render(request, 'retail/order_form.html', {'order': order_detail})
 
 #Customer Management - View customer details/Create new customer/Update customer details/Delete customer
@@ -1189,3 +1222,21 @@ def mark_alert_as_processed(request):
         """, [alert_id])
     
     return JsonResponse({'status': 'success'})
+
+def get_profiling_info(cursor):
+    cursor.execute("SHOW PROFILES;")
+    profiles = cursor.fetchall()
+    profiling_info = []
+    for profile in profiles:
+        query_id = profile[0]
+        query_time = profile[1]
+        cursor.execute(f"SHOW PROFILE FOR QUERY {query_id};")
+        profiling_info.append((query_time, cursor.fetchall()))
+    return profiling_info
+
+def print_profiling_info(profiling_info):
+    pd.set_option('display.float_format', '{:.9f}'.format)
+    for query_time, profile in profiling_info:
+        print(f"\nProfiling info for Query executed in {query_time:.9f} seconds:\n")
+        df = pd.DataFrame(profile, columns=['Stage', 'Duration'])
+        print(tabulate.tabulate(df, headers='keys', tablefmt='psql'))
