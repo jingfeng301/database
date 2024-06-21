@@ -19,7 +19,7 @@ class Customer(models.Model):
 
 class Users(models.Model):
     UserID =  models.AutoField(primary_key=True)
-    Username = models.CharField(max_length=255)
+    Username = models.CharField(max_length=255, unique=True)
     Password = models.CharField(max_length=255)
 
     def __str__(self):
@@ -121,3 +121,18 @@ class Transaction(models.Model):
         db_table = 'transactions'
         verbose_name_plural = 'transactions'
         ordering = ['TransactionID']
+
+class LowStockAlerts(models.Model):
+    AlertID = models.AutoField(primary_key=True)
+    ProductID = models.CharField(max_length=255)
+    AlertDate = models.DateTimeField()
+    Message = models.CharField(max_length=255)
+    Processed = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.ProductID} - {self.Message}"
+
+    class Meta:
+        db_table = 'LowStockAlerts'
+        verbose_name_plural = 'LowStockAlerts'
+        ordering = ['AlertID']

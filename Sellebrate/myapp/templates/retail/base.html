@@ -19,7 +19,7 @@
             background-color: #343a40;
             padding-top: 20px;
             position: fixed;
-            top: 56px;
+            top: 56px; /* Height of the navbar */
             left: 0;
             width: 250px;
         }
@@ -36,6 +36,7 @@
         .main-content {
             margin-left: 250px;
             padding: 20px;
+            padding-top: 76px; /* Adjust for fixed navbar */
         }
         .active {
             background-color: #495057;
@@ -52,7 +53,7 @@
     </style>
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
+    <nav class="navbar navbar-expand-lg navbar-dark fixed-top">
         <a class="navbar-brand" href="{% url 'index' %}">Sellebrate</a>
         <div class="ml-auto d-flex align-items-center">
             {% if request.session.username %}
@@ -71,16 +72,17 @@
                     <h5 class="text-white text-center">Navigation</h5>
                     <a href="{% url 'index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Dashboard</a>
                     <a href="{% url 'inventory_list' %}" class="{% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}">View Inventory</a>
-                    <a href="{% url 'product_list' %}" class="{% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">View All Product</a>
+                    <a href="{% url 'product_list' %}" class="{% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">View All Products</a>
                     <a href="{% url 'order_list' %}" class="{% if request.resolver_match.url_name == 'order_list' %}active{% endif %}">View Past Orders</a>
                     <a href="{% url 'customer_list' %}" class="{% if request.resolver_match.url_name == 'customer_list' %}active{% endif %}">View Customers</a>
-                    <a href="{% url 'product_create' %}" class="{% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">Add a new Product</a>
-                    <a href="{% url 'order_create' %}" class="{% if request.resolver_match.url_name == 'order_create' %}active{% endif %}">Add a new Order</a>
-                    <a href="{% url 'customer_create' %}" class="{% if request.resolver_match.url_name == 'customer_create' %}active{% endif %}">Add a new Customer</a>
+                    <a href="{% url 'product_create' %}" class="{% if request.resolver_match.url_name == 'product_create' %}active{% endif %}">Add a New Product</a>
+                    <a href="{% url 'order_create' %}" class="{% if request.resolver_match.url_name == 'order_create' %}active{% endif %}">Add a New Order</a>
+                    <a href="{% url 'customer_create' %}" class="{% if request.resolver_match.url_name == 'customer_create' %}active{% endif %}">Add a New Customer</a>
                 </div>
             </nav>
 
             <main role="main" class="col-md-9 ml-sm-auto col-lg-10 main-content">
+                <div id="alertsContainer"></div>
                 {% if messages %}
                     <div class="alert alert-success" role="alert">
                         {% for message in messages %}
@@ -96,5 +98,31 @@
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.2/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        function fetchLowStockAlerts() {
+            fetch('/api/getLowStockAlerts')
+                .then(response => response.json())
+                .then(alerts => {
+                    if (alerts.length > 0) {
+                        displayAlertsOnDashboard(alerts);
+                    }
+                })
+                .catch(error => console.error('Error fetching low stock alerts:', error));
+        }
+
+        function displayAlertsOnDashboard(alerts) {
+            const alertsContainer = document.getElementById('alertsContainer');
+            alertsContainer.innerHTML = ''; // Clear current alerts
+            alerts.forEach(alert => {
+                const messageElement = document.createElement('div');
+                messageElement.className = 'alert alert-warning';
+                messageElement.textContent = `Low Stock Alert - Product ID: ${alert.ProductID} - ${alert.Message}`;
+                alertsContainer.appendChild(messageElement);
+            });
+        }
+
+        setInterval(fetchLowStockAlerts, 60000); // Polling every 60 seconds
+        document.addEventListener('DOMContentLoaded', fetchLowStockAlerts); // Initial fetch when page loads
+    </script>
 </body>
 </html>

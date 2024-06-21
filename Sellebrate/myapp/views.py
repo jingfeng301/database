@@ -2,10 +2,11 @@ from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
-from django.db import connection
+from django.db import connection, IntegrityError
 from django.contrib.auth.hashers import make_password, check_password
 from django.core.paginator import Paginator
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
 from .models import *
 from .forms import *
 
@@ -17,18 +18,29 @@ def login_required(view_func):
         return view_func(request, *args, **kwargs)
     return wrapper
 
-#Register a new user
 def register(request):
     if request.method == 'POST':
         username = request.POST.get('username')
         password = request.POST.get('password')
         hashed_password = make_password(password)
 
+        # Check if the username already exists
         with connection.cursor() as cursor:
-            cursor.execute("INSERT INTO users (username, password) VALUES (%s, %s)", [username, hashed_password])
+            cursor.execute("SELECT COUNT(*) FROM users WHERE username = %s", [username])
+            if cursor.fetchone()[0] > 0:
+                return render(request, 'retail/register.html', {'error': 'Username already exists'})
 
-        return redirect('login')
+            # Attempt to insert the new user
+            try:
+                cursor.execute("INSERT INTO users (Username, Password) VALUES (%s, %s)", [username, hashed_password])
+                return redirect('login')
+            except IntegrityError:
+                return render(request, 'retail/register.html', {'error': 'Username already exists'})
+    
+    # If the request method is GET or other, render the registration form
     return render(request, 'retail/register.html')
+
+
 
 #Exisiting User login
 def user_login(request):
@@ -678,9 +690,10 @@ def product_update_description(request, product_id):
 def order_list(request):
     with connection.cursor() as cursor:
         cursor.execute("""
-            SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress
+            SELECT o.OrderID, o.CustomerID, c.Name, o.OrderDate, o.TotalAmount, o.ShippingAddress, o.UserID
             FROM orders o
             JOIN customers c ON o.CustomerID = c.CustomerID
+            LEFT JOIN users u ON o.UserID = u.UserID
         """)
         results = cursor.fetchall()
 
@@ -692,6 +705,7 @@ def order_list(request):
             'OrderDate': row[3],
             'TotalAmount': row[4],
             'ShippingAddress': row[5],
+            'UserID' : row[6],
         }
         for row in results
     ]
@@ -710,6 +724,7 @@ def order_create(request):
         order_date = request.POST.get('OrderDate')
         total_amount = request.POST.get('TotalAmount')
         shipping_address = request.POST.get('ShippingAddress')
+        user_id = request.user.id
         
         with connection.cursor() as cursor:
             # Check if the CustomerID exists
@@ -731,8 +746,8 @@ def order_create(request):
                 cursor.execute("START TRANSACTION")
                 # Insert the new order
                 cursor.execute("""
-                    INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress)
-                    VALUES (%s, %s, %s, %s, %s)
+                    INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress, UserID)
+                    VALUES (%s, %s, %s, %s, %s, %s)
                 """, [order_id, customer_id, order_date, total_amount, shipping_address])
                 
                 # Update the customer's last purchase date to the latest order date
@@ -1074,49 +1089,6 @@ def customer_update(request, customer_id):
     return render(request, 'retail/customer_form.html', {'customer': customer_detail})
 
 
-# def order_status(request, order_id):
-#     with connection.cursor() as cursor:
-#         # Fetch order details
-#         cursor.execute("""
-#             SELECT OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress
-#             FROM orders
-#             WHERE OrderID = %s
-#         """, [order_id])
-#         order = cursor.fetchone()
-
-#         if order is None:
-#             raise Http404("Order does not exist")
-
-#         order_data = {
-#             'OrderID': order[0],
-#             'CustomerID': order[1],
-#             'OrderDate': order[2],
-#             'TotalAmount': order[3],
-#             'ShippingAddress': order[4]
-#         }
-
-#         cursor.execute("""
-#             SELECT OrderDetailID, OrderID, ProductID, Quantity, UnitPrice
-#             FROM orderdetails
-#             WHERE OrderID = %s
-#         """, [order_id])
-#         order_details = cursor.fetchall()
-
-#     order_details_data = [
-#         {
-#             'OrderDetailID': detail[0],
-#             'OrderID': detail[1],
-#             'ProductID': detail[2],
-#             'Quantity': detail[3],
-#             'UnitPrice': detail[4],
-#         }
-#         for detail in order_details
-#     ]
-
-#     return render(request, 'retail/order_detail.html', {'order': order_data, 'order_details': order_details_data})
-
-#Search Filter
-
 #Inventory Page
 @login_required
 def inventory_list(request):
@@ -1178,3 +1150,33 @@ def inventory_update(request, product_id):
     }
 
     return render(request, 'retail/inventory_update.html', {'inventory': inventory_detail})
+
+@login_required
+def get_low_stock_alerts(request):
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            SELECT AlertID, ProductID, AlertDate, Message
+            FROM LowStockAlerts
+            WHERE Processed = FALSE
+        """)
+        alerts = cursor.fetchall()
+    
+    alerts_list = [
+        {'AlertID': row[0], 'ProductID': row[1], 'AlertDate': row[2], 'Message': row[3]}
+        for row in alerts
+    ]
+
+    return JsonResponse(alerts_list, safe=False)
+
+@csrf_exempt
+@login_required
+def mark_alert_as_processed(request):
+    alert_id = request.POST.get('alert_id')
+    with connection.cursor() as cursor:
+        cursor.execute("""
+            UPDATE LowStockAlerts
+            SET Processed = TRUE
+            WHERE AlertID = %s
+        """, [alert_id])
+    
+    return JsonResponse({'status': 'success'})

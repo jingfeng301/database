@@ -27,8 +27,3 @@ Copy and paste the script in your database CLI and run it to seed your database.
 ```
 python manage.py runserver
 ```
-
-# To Do
-
-1. Write out instruction on how to use this app in README
-2. Insert in CRUD Ops inside Views.py

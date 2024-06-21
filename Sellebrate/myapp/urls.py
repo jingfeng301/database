@@ -25,4 +25,6 @@ urlpatterns = [
     path('inventory/<str:product_id>/update/', views.inventory_update, name='inventory_update'),
     path('logout/', views.user_logout, name='logout'),
     path('register/', views.register, name='register'),
+    path('api/getLowStockAlerts', views.get_low_stock_alerts, name='get_low_stock_alerts'),
+    path('api/markAlertAsProcessed', views.mark_alert_as_processed, name='mark_alert_as_processed'),
 ]
