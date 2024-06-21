@@ -7,6 +7,9 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
+DELIMITER //
+DROP TRIGGER IF EXISTS update_recency_trigger;
+
 CREATE TRIGGER update_recency_trigger
 AFTER INSERT ON `orders`
 FOR EACH ROW
@@ -15,6 +18,9 @@ BEGIN
     SET c.`LastPurchaseDate` = NEW.`OrderDate`
     WHERE c.`CustomerID` = NEW.`CustomerID`;
 END;
+//
+
+DELIMITER ;
 
 INSERT INTO `customers` (`CustomerID`, `Name`, `Email`, `Contact Number`, `Address`, `Country`) VALUES
 ('AA-10315', 'Alex Avila', 'alex.avila@gmail.com', '973-797-2164', '7769 Main St, Apt 26', 'United States');
@@ -3427,7 +3433,7 @@ INSERT INTO `orders` (`OrderID`, `CustomerID`, `OrderDate`, `TotalAmount`, `Ship
 ('CA-2014-145317', 'SM-20320', STR_TO_DATE('3/18/2014', '%m/%d/%Y'), 30.768, '9752 Main St, Apt 15', 2),
 ('CA-2014-145387', 'AM-10705', STR_TO_DATE('10/31/2014', '%m/%d/%Y'), 14.76, '9543 Main St, Apt 47', 3),
 ('CA-2014-145576', 'CA-12775', STR_TO_DATE('9/14/2014', '%m/%d/%Y'), 13.128, '4172 Main St, Apt 23', 4),
-('CA-2014-145800', 'SS-20410', STR_TO_DATE('5/30/2014', '%m/%d/%Y'), 355.455, '5907 Main St, Apt 93', 5);
+('CA-2014-145800', 'SS-20410', STR_TO_DATE('5/30/2014', '%m/%d/%Y'), 355.455, '5907 Main St, Apt 93', 5),
 ('CA-2014-145926', 'MP-17470', STR_TO_DATE('11/17/2014', '%m/%d/%Y'), 479.9, '13 Main St, Apt 9', 1),
 ('CA-2014-146283', 'KT-16465', STR_TO_DATE('9/8/2014', '%m/%d/%Y'), 966.7, '751 Main St, Apt 32', 2),
 ('CA-2014-146591', 'TS-21340', STR_TO_DATE('1/19/2014', '%m/%d/%Y'), 181.47, '2999 Main St, Apt 67', 3),
@@ -4173,7 +4179,7 @@ INSERT INTO `orders` (`OrderID`, `CustomerID`, `OrderDate`, `TotalAmount`, `Ship
 ('CA-2016-159639', 'PC-18745', STR_TO_DATE('11/27/2016', '%m/%d/%Y'), 31.56, '752 Main St, Apt 77', 3),
 ('CA-2016-159730', 'SJ-20125', STR_TO_DATE('9/17/2016', '%m/%d/%Y'), 113.888, '3966 Main St, Apt 66', 4),
 ('CA-2016-159912', 'GB-14530', STR_TO_DATE('8/29/2016', '%m/%d/%Y'), 241.92, '8204 Main St, Apt 16', 5),
-('CA-2016-159940', 'BF-11020', STR_TO_DATE('7/7/2016', '%m/%d/%Y'), 60.288, '6819 Main St, Apt 83', 2);
+('CA-2016-159940', 'BF-11020', STR_TO_DATE('7/7/2016', '%m/%d/%Y'), 60.288, '6819 Main St, Apt 83', 2),
 ('CA-2016-160108', 'AG-10900', STR_TO_DATE('12/8/2016', '%m/%d/%Y'), 405.86, '4181 Main St, Apt 84', 3),
 ('CA-2016-160129', 'LS-17200', STR_TO_DATE('11/23/2016', '%m/%d/%Y'), 14.368, '1392 Main St, Apt 45', 5),
 ('CA-2016-160241', 'DR-12940', STR_TO_DATE('11/29/2016', '%m/%d/%Y'), 242.176, '9251 Main St, Apt 78', 2),
