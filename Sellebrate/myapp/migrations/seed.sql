@@ -12,7 +12,7 @@ AFTER INSERT ON `orders`
 FOR EACH ROW
 BEGIN
     UPDATE `customers` AS c
-    SET c.`LastPurchase` = NEW.`OrderDate`
+    SET c.`LastPurchaseDate` = NEW.`OrderDate`
     WHERE c.`CustomerID` = NEW.`CustomerID`;
 END;
 
