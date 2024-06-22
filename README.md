@@ -27,3 +27,19 @@ Copy and paste the script in your database CLI and run it to seed your database.
 ```
 python manage.py runserver
 ```
+
+
+# For Low Alert Trigger
+Please add the trigger to your DB for the Low Alert Trigger to work:
+Also ensure you do a python manage.py migrate for the Low Alert Table
+When at the webapp, Update an inventory to less than 10, the inventory alert shld popped out
+
+CREATE TRIGGER CheckLowStock
+AFTER UPDATE ON Inventory
+FOR EACH ROW
+BEGIN
+    IF NEW.StockQuantity < 10 THEN
+        INSERT INTO LowStockAlerts (ProductID, AlertDate, Message)
+        VALUES (NEW.ProductID, NOW(), 'Stock is below threshold');
+    END IF;
+END;
