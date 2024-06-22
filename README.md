@@ -9,17 +9,17 @@ Hence, Sell-ebrate seeks to sell and manage products using a web application to 
 Copy and paste .env.template to .env and update your DB credentials in .env
 
 ```
-pip install django django-environ mysqlclient
+pip install django django-environ mysqlclient tabulate pandas
 
 python manage.py migrate
 ```
 
 ## Seed Database with Dataset
 
-Copy and paste the script in your database CLI and run it to seed your database.
+Import the seed script to your database
 
 ```
-./Sellebrate/myapp/migrations/seed.sql
+mysql -u username -p database_name < "./Sellebrate/myapp/migrations/seed.sql"
 ```
 
 # Local Development
@@ -28,18 +28,18 @@ Copy and paste the script in your database CLI and run it to seed your database.
 python manage.py runserver
 ```
 
-
 # For Low Alert Trigger
+
 Please add the trigger to your DB for the Low Alert Trigger to work:
 Also ensure you do a python manage.py migrate for the Low Alert Table
-When at the webapp, Update an inventory to less than 10, the inventory alert shld popped out
+When at the webapp, Update an inventory to less than 10, the inventory alert should appear.
 
 CREATE TRIGGER CheckLowStock
 AFTER UPDATE ON Inventory
 FOR EACH ROW
 BEGIN
-    IF NEW.StockQuantity < 10 THEN
-        INSERT INTO LowStockAlerts (ProductID, AlertDate, Message)
-        VALUES (NEW.ProductID, NOW(), 'Stock is below threshold');
-    END IF;
+IF NEW.StockQuantity < 10 THEN
+INSERT INTO LowStockAlerts (ProductID, AlertDate, Message)
+VALUES (NEW.ProductID, NOW(), 'Stock is below threshold');
+END IF;
 END;

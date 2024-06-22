@@ -18,9 +18,21 @@ BEGIN
     SET c.`LastPurchaseDate` = NEW.`OrderDate`
     WHERE c.`CustomerID` = NEW.`CustomerID`;
 END;
+
+CREATE TRIGGER CheckLowStock
+AFTER UPDATE ON Inventory
+FOR EACH ROW
+BEGIN
+    IF NEW.StockQuantity < 10 THEN
+        INSERT INTO LowStockAlerts (ProductID, AlertDate, Message)
+        VALUES (NEW.ProductID, NOW(), 'Stock is below threshold');
+    END IF;
+END;
+
 //
 
 DELIMITER ;
+
 
 INSERT INTO `customers` (`CustomerID`, `Name`, `Email`, `Contact Number`, `Address`, `Country`) VALUES
 ('AA-10315', 'Alex Avila', 'alex.avila@gmail.com', '973-797-2164', '7769 Main St, Apt 26', 'United States');

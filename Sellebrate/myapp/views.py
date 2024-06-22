@@ -612,7 +612,7 @@ def product_create(request):
                 VALUES (%s, %s, %s, %s, %s)
             """, [product_id, product_name, category, product_description, unit_price])
             cursor.execute("""
-                INSERT INTO Inventory (ProductID_id, StockQuantity, LastRestocked)
+                INSERT INTO Inventory (ProductID, StockQuantity, LastRestocked)
                 VALUES (%s, %s, %s)
             """, [product_id, stock_quantity, last_restocked])
 
@@ -674,7 +674,7 @@ def product_update_price(request, product_id):
 @login_required
 def product_update_description(request, product_id):
     if request.method == 'POST':
-        new_description = request.POST.get('ProductDescription')
+        new_description = request.POST.get('Description')
 
         with connection.cursor() as cursor:
             cursor.execute("""
@@ -753,7 +753,7 @@ def order_create(request):
                 cursor.execute("""
                     INSERT INTO orders (OrderID, CustomerID, OrderDate, TotalAmount, ShippingAddress, UserID)
                     VALUES (%s, %s, %s, %s, %s, %s)
-                """, [order_id, customer_id, order_date, total_amount, shipping_address])
+                """, [order_id, customer_id, order_date, total_amount, shipping_address, user_id])
                 
                 # Update the customer's last purchase date to the latest order date
                 cursor.execute("""
@@ -1188,7 +1188,7 @@ def inventory_update(request, product_id):
     inventory_detail = {
         'ProductID': inventory[0],
         'StockQuantity': inventory[1],
-        'LastRestocked': inventory[2]
+        'LastRestocked': inventory[2].strftime('%Y-%m-%d')
     }
 
     return render(request, 'retail/inventory_update.html', {'inventory': inventory_detail})
