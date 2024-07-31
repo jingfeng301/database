@@ -36,4 +36,8 @@ urlpatterns = [
     path('recommendation/delete/<str:recommendation_id>/', views.delete_recommendation, name='delete_recommendation'),
     path('review/list/', views.list_reviews, name='list_reviews'),
     path('support_ticket/list/', views.list_support_tickets, name='list_support_tickets'),
+    path('support_tickets/view/<str:ticket_id>/', views.view_ticket, name='view_ticket'),
+    path('support_tickets/add_reply/<str:ticket_id>/', views.add_reply, name='add_reply'),
+    path('support_tickets/resolve/<str:ticket_id>/', views.resolve_ticket, name='resolve_ticket'),
+    
 ]

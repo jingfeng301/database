@@ -7,6 +7,7 @@ from django.contrib.auth.hashers import make_password, check_password
 from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse
 from django.views.decorators.csrf import csrf_exempt
+from datetime import datetime
 from .models import *
 from .forms import *
 import pandas as pd
@@ -48,6 +49,65 @@ def list_support_tickets(request):
 
     return render(request, 'retail/support_ticket_list.html', {'support_tickets': support_tickets})
 
+def view_ticket(request, ticket_id):
+    # Retrieve the specific support ticket
+    support_tickets = find_documents('support_tickets', {'TicketID': ticket_id})
+    if not support_tickets:
+        raise Http404("Support ticket does not exist")
+    
+    ticket = support_tickets[0]
+
+    # Retrieve all comments for the specific ticket
+    support_ticket_comments = find_documents('support_ticket_comments', {'TicketID': ticket_id})
+    support_ticket_comments = sorted(support_ticket_comments, key=lambda x: x['CreatedDate'], reverse=True)
+    logger.debug(f"Support Ticket retrieved: {ticket}")
+    logger.debug(f"Support Ticket Comments retrieved: {support_ticket_comments}")
+
+    # Add comments to the ticket
+    ticket['Comments'] = support_ticket_comments
+
+    # Fetch customer name from SQL database
+    try:
+        customer = Customer.objects.get(CustomerID=ticket['CustomerID'])
+        ticket['CustomerName'] = customer.Name or f"Customer ID {ticket['CustomerID']} (No Name)"
+    except Customer.DoesNotExist:
+        ticket['CustomerName'] = f"Customer ID {ticket['CustomerID']} not found"
+
+    return render(request, 'retail/view_ticket.html', {'ticket': ticket})
+    
+def add_reply(request, ticket_id):
+    if request.method == 'POST':
+        form = SupportTicketCommentForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            data['CommentID'] = str(ObjectId())
+            data['TicketID'] = ticket_id
+            data['AuthorID'] = request.user.id
+            data['AuthorIsStaff'] = True
+            data['CreatedDate'] = datetime.now()
+            insert_document('support_ticket_comments', data)
+            return redirect('view_ticket', ticket_id=ticket_id)
+    else:
+        form = SupportTicketCommentForm()
+    return render(request, 'retail/support_ticket_comment_form.html', {'form': form})
+    
+def resolve_ticket(request, ticket_id):
+    if request.method == 'POST':
+        support_tickets = find_documents('support_tickets', {'TicketID': ticket_id})
+        if not support_tickets:
+            raise Http404("Support ticket does not exist")
+        
+        ticket = support_tickets[0]
+        ticket['IsIssueResolved'] = True
+        ticket['ResolvedDate'] = datetime.now()
+        # Update the ticket in the database (assuming you have a function to update documents)
+        update_document('support_tickets', {'TicketID': ticket_id}, ticket)
+        logger.debug(f"Ticket {ticket_id} marked as resolved.")
+        
+        return redirect('view_ticket', ticket_id=ticket_id)
+    else:
+        raise Http404("Invalid request method")
+    
 #REVIEW SYSTEM
 def list_reviews(request):
     reviews = find_documents('reviews', {})
@@ -190,7 +250,6 @@ def delete_promotion(request, promotion_id):
     delete_document('promotion', {'PromotionID': promotion_id})
     return redirect('list_promotions')
 
-#This will make the user be required to login before they can view the data
 def login_required(view_func):
     def wrapper(request, *args, **kwargs):
         if 'username' not in request.session:

@@ -1,37 +1,67 @@
 {% extends "retail/base.html" %}
 
 {% block content %}
-    <h1>Support Ticket List</h1>
+<h1 class="my-4">Support Tickets</h1>
     {% if support_tickets %}
-        <ul>
-            {% for ticket in support_tickets %}
-                <li>
-                    <strong>Ticket ID:</strong> {{ ticket.TicketID }}<br>
-                    <strong>Customer ID:</strong> {{ ticket.CustomerID }}<br>
-                    <strong>Customer Name:</strong> {{ ticket.CustomerName }}<br>
-                    <strong>Description:</strong> {{ ticket.Description }}<br>
-                    <strong>Timestamp:</strong> {{ ticket.Timestamp }}<br>
-                    <strong>Customer Rating:</strong> {{ ticket.CustomerRating }}<br>
-                    <strong>Customer Feedback:</strong> {{ ticket.CustomerFeedback }}<br>
-                    <strong>Issue Resolved:</strong> {{ ticket.IsIssueResolved }}<br>
-                    <strong>Created Date:</strong> {{ ticket.CreatedDate }}<br>
-                    <strong>Resolved Date:</strong> {{ ticket.ResolvedDate }}<br>
-                    <strong>Comments:</strong>
-                    <ul>
-                        {% for comment in ticket.Comments %}
-                            <li>
-                                <strong>Comment ID:</strong> {{ comment.CommentID }}<br>
-                                <strong>Author ID:</strong> {{ comment.AuthorID }}<br>
-                                <strong>Author Staff:</strong> {{ comment.AuthorStaff }}<br>
-                                <strong>Message:</strong> {{ comment.Message }}<br>
-                                <strong>Created Date:</strong> {{ comment.CreatedDate }}<br>
-                            </li>
-                        {% endfor %}
-                    </ul>
-                </li>
-                <hr>
-            {% endfor %}
-        </ul>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Ticket ID</th>
+                    <th>Customer ID</th>
+                    <th>Customer Name</th>
+                    <th>Description</th>
+                    <th>Timestamp</th>
+                    <th>Customer Rating</th>
+                    <th>Customer Feedback</th>
+                    <th>Issue Resolved</th>
+                    <th>Created Date</th>
+                    <th>Resolved Date</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for ticket in support_tickets %}
+                    <tr>
+                        <td>{{ ticket.TicketID }}</td>
+                        <td>{{ ticket.CustomerID }}</td>
+                        <td>{{ ticket.CustomerName }}</td>
+                        <td>{{ ticket.Description }}</td>
+                        <td>{{ ticket.Timestamp }}</td>
+                        <td>{{ ticket.CustomerRating }}</td>
+                        <td>{{ ticket.CustomerFeedback }}</td>
+                        <td>{% if ticket.IsIssueResolved %}
+                            <span class="badge bg-success text-white">Resolved</span>
+                        {% else %}
+                            <span class="badge bg-danger text-white">Unresolved</span>
+                        {% endif %}</td>
+                        <td>{{ ticket.CreatedDate }}</td>
+                        <td>{{ ticket.ResolvedDate }}</td>
+                        <!-- <td>
+                            <ul>
+                                {% for comment in ticket.Comments %}
+                                    <li>
+                                        <strong>Comment ID:</strong> {{ comment.CommentID }}<br>
+                                        <strong>Author ID:</strong> {{ comment.AuthorID }}<br>
+                                        <strong>Author Staff:</strong> {{ comment.AuthorIsStaff }}<br>
+                                        <strong>Message:</strong> {{ comment.Message }}<br>
+                                        <strong>Created Date:</strong> {{ comment.CreatedDate }}<br>
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        </td> -->
+                        <td>
+                            <a href="{% url 'view_ticket' ticket.TicketID %}" class="btn btn-primary">View</a>
+                            <!-- {% if not ticket.IsIssueResolved %}
+                                <form method="post" action="{% url 'resolve_ticket' ticket.TicketID %}">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success">Mark as Resolved</button>
+                                </form>
+                            {% endif %} -->
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
     {% else %}
         <p>No support tickets found.</p>
     {% endif %}

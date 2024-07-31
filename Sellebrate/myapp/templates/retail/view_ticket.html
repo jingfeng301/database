@@ -1,0 +1,56 @@
+{% extends "retail/base.html" %}
+
+{% block content %}
+<div class="container">
+    <h1 class="my-4">Ticket Details</h1>
+    <div class="card mb-4">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <span>Ticket ID: {{ ticket.TicketID }}</span>
+            {% if ticket.IsIssueResolved %}
+                <span class="badge bg-success text-white">Resolved @ {{ ticket.ResolvedDate|date:"F j, Y, g:i a" }}</span>
+            {% else %}
+                <span class="badge bg-danger text-white">Unresolved</span>
+            {% endif %}
+        </div>
+        <div class="card-body">
+            <p><strong>Customer:</strong> {{ ticket.CustomerName }} ({{ ticket.CustomerID }})</p>
+            <p><strong>Details:</strong> {{ ticket.Description }}</p>
+            <p class="card-text">
+                <small class="text-muted">{{ ticket.CreatedDate|date:"F j, Y, g:i a" }}</small>
+            </p>
+        </div>
+    </div>
+    <h2 class="my-4">Comments</h2>
+    {% if ticket.Comments %}
+        <div class="list-group">
+            {% for comment in ticket.Comments %}
+                <div class="card mb-3">
+                    <div class="card-body">
+                        <h5 class="card-title">
+                            {% if comment.AuthorIsStaff %}
+                                <span class="badge bg-primary text-white">Staff Reply</span>
+                            {% endif %}
+                        </h5>
+                        <p class="card-text">{{ comment.Message }}</p>
+                        <p class="card-text">
+                            <small class="text-muted">{{ comment.CreatedDate|date:"F j, Y, g:i a" }}</small>
+                        </p>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p>No comments found.</p>
+    {% endif %}
+    <div class="d-flex mt-4">
+        {% if not ticket.IsIssueResolved %}
+            <a href="{% url 'add_reply' ticket.TicketID %}" class="btn btn-primary mr-2">Add Reply</a>
+            <form method="post" action="{% url 'resolve_ticket' ticket.TicketID %}">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-success mr-2">Mark as Resolved</button>
+            </form>
+        {% endif %}
+        <a href="{% url 'list_support_tickets' %}" class="btn btn-secondary">Back to List</a>
+    </div>
+</div>
+{% endblock %}

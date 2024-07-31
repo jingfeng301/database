@@ -57,3 +57,9 @@ class RecommendationForm(forms.Form):
     CustomerID = forms.CharField(max_length=100)
     RecommendedProducts = forms.CharField(widget=forms.Textarea)  
     CreatedDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    
+class SupportTicketCommentForm(forms.Form):
+    Message = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control', 'rows': 5}),
+        label='Message'
+    )
