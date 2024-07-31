@@ -69,8 +69,11 @@
         <div class="row">
             <nav class="col-md-2 d-none d-md-block sidebar">
                 <div class="sidebar-sticky">
-                    <h5 class="text-white text-center">Navigation</h5>
                     <a href="{% url 'index' %}" class="{% if request.resolver_match.url_name == 'index' %}active{% endif %}">Dashboard</a>
+                    <a href="{% url 'list_support_tickets' %}" class="{% if request.resolver_match.url_name == 'list_support_tickets' %}active{% endif %}">View Support Tickets</a>
+                    <a href="{% url 'list_reviews' %}" class="{% if request.resolver_match.url_name == 'list_reviews' %}active{% endif %}">View Review</a>
+                    <a href="{% url 'list_recommendations' %}" class="{% if request.resolver_match.url_name == 'list_recommendations' %}active{% endif %}">View Recommendations</a>
+                    <a href="{% url 'list_promotion' %}" class="{% if request.resolver_match.url_name == 'list_promotion' %}active{% endif %}">View Promotion</a>
                     <a href="{% url 'inventory_list' %}" class="{% if request.resolver_match.url_name == 'inventory_list' %}active{% endif %}">View Inventory</a>
                     <a href="{% url 'product_list' %}" class="{% if request.resolver_match.url_name == 'product_list' %}active{% endif %}">View All Products</a>
                     <a href="{% url 'order_list' %}" class="{% if request.resolver_match.url_name == 'order_list' %}active{% endif %}">View Past Orders</a>

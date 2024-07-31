@@ -35,3 +35,25 @@ class PaymentmethodForm(forms.ModelForm):
     class Meta:
         model = PaymentMethod
         fields = ['CustomerID', 'MethodType', 'Provider', 'ExpiryDate']
+
+class PromotionForm(forms.Form):
+    PromotionID = forms.CharField(max_length=100)
+    ProductID = forms.CharField(max_length=100)
+    PromotionName = forms.CharField(max_length=100)
+    StartDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    EndDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    DiscountPercentage = forms.FloatField()
+
+class ReviewForm(forms.Form):
+    ReviewID = forms.CharField(max_length=100)
+    CustomerID = forms.CharField(max_length=100)
+    ProductID = forms.CharField(max_length=100)
+    Rating = forms.IntegerField()
+    Comment = forms.CharField(widget=forms.Textarea)
+    ReviewDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+
+class RecommendationForm(forms.Form):
+    RecommendationID = forms.CharField(max_length=100)
+    CustomerID = forms.CharField(max_length=100)
+    RecommendedProducts = forms.CharField(widget=forms.Textarea)  
+    CreatedDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))

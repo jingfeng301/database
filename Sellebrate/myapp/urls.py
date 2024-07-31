@@ -27,4 +27,13 @@ urlpatterns = [
     path('register/', views.register, name='register'),
     path('api/getLowStockAlerts', views.get_low_stock_alerts, name='get_low_stock_alerts'),
     path('api/markAlertAsProcessed', views.mark_alert_as_processed, name='mark_alert_as_processed'),
+    path('promotion/add/', views.add_promotion, name='add_promotion'),
+    path('promotion/list/', views.list_promotion, name='list_promotion'),
+    path('promotion/edit/<str:promotion_id>/', views.edit_promotion, name='edit_promotion'),
+    path('promotion/delete/<str:promotion_id>/', views.delete_promotion, name='delete_promotion'),
+     path('recommendation/add/', views.add_recommendation, name='add_recommendation'),
+    path('recommendation/list/', views.list_recommendations, name='list_recommendations'),
+    path('recommendation/delete/<str:recommendation_id>/', views.delete_recommendation, name='delete_recommendation'),
+    path('review/list/', views.list_reviews, name='list_reviews'),
+    path('support_ticket/list/', views.list_support_tickets, name='list_support_tickets'),
 ]

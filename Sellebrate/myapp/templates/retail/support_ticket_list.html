@@ -1,0 +1,38 @@
+{% extends "retail/base.html" %}
+
+{% block content %}
+    <h1>Support Ticket List</h1>
+    {% if support_tickets %}
+        <ul>
+            {% for ticket in support_tickets %}
+                <li>
+                    <strong>Ticket ID:</strong> {{ ticket.TicketID }}<br>
+                    <strong>Customer ID:</strong> {{ ticket.CustomerID }}<br>
+                    <strong>Customer Name:</strong> {{ ticket.CustomerName }}<br>
+                    <strong>Description:</strong> {{ ticket.Description }}<br>
+                    <strong>Timestamp:</strong> {{ ticket.Timestamp }}<br>
+                    <strong>Customer Rating:</strong> {{ ticket.CustomerRating }}<br>
+                    <strong>Customer Feedback:</strong> {{ ticket.CustomerFeedback }}<br>
+                    <strong>Issue Resolved:</strong> {{ ticket.IsIssueResolved }}<br>
+                    <strong>Created Date:</strong> {{ ticket.CreatedDate }}<br>
+                    <strong>Resolved Date:</strong> {{ ticket.ResolvedDate }}<br>
+                    <strong>Comments:</strong>
+                    <ul>
+                        {% for comment in ticket.Comments %}
+                            <li>
+                                <strong>Comment ID:</strong> {{ comment.CommentID }}<br>
+                                <strong>Author ID:</strong> {{ comment.AuthorID }}<br>
+                                <strong>Author Staff:</strong> {{ comment.AuthorStaff }}<br>
+                                <strong>Message:</strong> {{ comment.Message }}<br>
+                                <strong>Created Date:</strong> {{ comment.CreatedDate }}<br>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                </li>
+                <hr>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No support tickets found.</p>
+    {% endif %}
+{% endblock %}

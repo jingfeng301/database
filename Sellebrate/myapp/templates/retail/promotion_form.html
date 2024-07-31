@@ -1,0 +1,10 @@
+{% extends "retail/base.html" %}
+
+{% block content %}
+    <h1>{% if form.instance.pk %}Edit{% else %}Add{% endif %} Promotion</h1>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-success">{% if form.instance.pk %}Update{% else %}Add{% endif %}</button>
+    </form>
+{% endblock %}

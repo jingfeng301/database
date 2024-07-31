@@ -1,0 +1,24 @@
+{% extends "retail/base.html" %}
+
+{% block content %}
+    <h1>Review List</h1>
+    {% if reviews %}
+        <ul>
+            {% for review in reviews %}
+                <li>
+                    <strong>Review ID:</strong> {{ review.ReviewID }}<br>
+                    <strong>Customer ID:</strong> {{ review.CustomerID }}<br>
+                    <strong>Customer Name:</strong> {{ review.CustomerName }}<br>
+                    <strong>Product ID:</strong> {{ review.ProductID }}<br>
+                    <strong>Product Name:</strong> {{ review.ProductName }}<br>
+                    <strong>Rating:</strong> {{ review.Rating }}<br>
+                    <strong>Comment:</strong> {{ review.Comment }}<br>
+                    <strong>Review Date:</strong> {{ review.ReviewDate }}<br>
+                </li>
+                <hr>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>No reviews found.</p>
+    {% endif %}
+{% endblock %}

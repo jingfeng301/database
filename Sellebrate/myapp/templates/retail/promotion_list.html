@@ -1,0 +1,38 @@
+{% extends "retail/base.html" %}
+
+{% block content %}
+    <h1>Promotion List</h1>
+    <a href="{% url 'add_promotion' %}" class="btn btn-primary">Add Promotion</a>
+    <br>
+    <table class="table table-bordered">
+        <thead>
+            <tr>
+                <th>Promotion ID</th>
+                <th>Product ID</th>
+                <th>Product Name</th>
+                <th>Promotion Name</th>
+                <th>Start Date</th>
+                <th>End Date</th>
+                <th>Discount Percentage</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for promotion in promotions %}
+                <tr>
+                    <td>{{ promotion.PromotionID }}</td>
+                    <td>{{ promotion.ProductID }}</td>
+                    <td>{{ promotion.ProductName }}</td>
+                    <td>{{ promotion.PromotionName }}</td>
+                    <td>{{ promotion.StartDate }}</td>
+                    <td>{{ promotion.EndDate }}</td>
+                    <td>{{ promotion.DiscountPercentage }}</td>
+                    <td>
+                        <a href="{% url 'edit_promotion' promotion.PromotionID %}" class="btn btn-warning">Edit</a>
+                        <a href="{% url 'delete_promotion' promotion.PromotionID %}" class="btn btn-danger">Delete</a>
+                    </td>
+                </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+{% endblock %}

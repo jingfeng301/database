@@ -11,6 +11,184 @@ from .models import *
 from .forms import *
 import pandas as pd
 import tabulate
+import json
+from .mongo_utils import *
+import logging
+from bson import ObjectId
+from django.http import Http404
+
+logger = logging.getLogger(__name__)
+
+#SUPPORT SYSTEM
+def list_support_tickets(request):
+    support_tickets = find_documents('support_tickets', {})
+    support_ticket_comments = find_documents('support_ticket_comments', {})
+    logger.debug(f"Support Tickets retrieved: {support_tickets}")
+    logger.debug(f"Support Ticket Comments retrieved: {support_ticket_comments}")
+
+    # Organize comments by ticket ID
+    comments_by_ticket = {}
+    for comment in support_ticket_comments:
+        ticket_id = comment['TicketID']
+        if ticket_id not in comments_by_ticket:
+            comments_by_ticket[ticket_id] = []
+        comments_by_ticket[ticket_id].append(comment)
+
+    # Add comments and customer name to each support ticket
+    for ticket in support_tickets:
+        ticket_id = ticket['TicketID']
+        ticket['Comments'] = comments_by_ticket.get(ticket_id, [])
+
+        # Fetch customer name from SQL database
+        try:
+            customer = Customer.objects.get(CustomerID=ticket['CustomerID'])
+            ticket['CustomerName'] = customer.Name or f"Customer ID {ticket['CustomerID']} (No Name)"
+        except Customer.DoesNotExist:
+            ticket['CustomerName'] = f"Customer ID {ticket['CustomerID']} not found"
+
+    return render(request, 'retail/support_ticket_list.html', {'support_tickets': support_tickets})
+
+#REVIEW SYSTEM
+def list_reviews(request):
+    reviews = find_documents('reviews', {})
+    logger.debug(f"Reviews retrieved: {reviews}")
+
+    for review in reviews:
+        # Ensure date formatting
+        review['ReviewDate'] = review['ReviewDate'].strftime('%Y-%m-%d %H:%M:%S') if 'ReviewDate' in review else ''
+        
+        # Fetch customer name from SQL database
+        try:
+            customer = Customer.objects.get(CustomerID=review['CustomerID'])
+            review['CustomerName'] = customer.Name or f"Customer ID {review['CustomerID']} (No Name)"
+        except Customer.DoesNotExist:
+            review['CustomerName'] = f"Customer ID {review['CustomerID']} not found"
+
+        # Fetch product name from SQL database
+        try:
+            product = Product.objects.get(ProductID=review['ProductID'])
+            review['ProductName'] = product.ProductName or f"Product ID {review['ProductID']} (No Name)"
+        except Product.DoesNotExist:
+            review['ProductName'] = f"Product ID {review['ProductID']} not found"
+
+    return render(request, 'retail/review_list.html', {'reviews': reviews})
+
+def add_review(request):
+    if request.method == 'POST':
+        form = ReviewForm(request.POST)
+        if form.is_valid():
+            insert_document('reviews', form.cleaned_data)
+            return redirect('list_reviews')
+    else:
+        form = ReviewForm()
+    return render(request, 'retail/review_form.html', {'form': form})
+
+def edit_review(request, review_id):
+    reviews = find_documents('reviews', {'ReviewID': review_id})
+    if not reviews:
+        raise Http404("Review not found")
+    
+    review = reviews[0]  # There should be only one document with the given ReviewID
+    if request.method == 'POST':
+        form = ReviewForm(request.POST, initial=review)
+        if form.is_valid():
+            update_document('reviews', {'ReviewID': review_id}, form.cleaned_data)
+            return redirect('list_reviews')
+    else:
+        form = ReviewForm(initial=review)
+    return render(request, 'retail/review_form.html', {'form': form})
+
+def delete_review(request, review_id):
+    delete_document('reviews', {'ReviewID': review_id})
+    return redirect('list_reviews')
+
+#RECOMMENDATION SYSTEM
+def list_recommendations(request):
+    recommendations = find_documents('recommendation', {})
+    logger.debug(f"Recommendations retrieved: {recommendations}")
+
+    for recommendation in recommendations:
+        # Add a new field for _id that does not start with an underscore
+        recommendation['id'] = str(recommendation['_id'])
+        
+        # Fetch customer name from SQL database
+        try:
+            customer = Customer.objects.get(CustomerID=recommendation['CustomerID'])
+            recommendation['CustomerName'] = customer.Name or f"Customer ID {recommendation['CustomerID']} (No Name)"
+        except Customer.DoesNotExist:
+            recommendation['CustomerName'] = f"Customer ID {recommendation['CustomerID']} not found"
+        
+        # Fetch product names for each recommended product
+        product_names = []
+        for product_id in recommendation['RecommendedProducts']:
+            try:
+                product = Product.objects.get(ProductID=product_id)
+                product_names.append(product.ProductName)
+            except Product.DoesNotExist:
+                product_names.append(f"Product ID {product_id} not found")
+        recommendation['ProductNames'] = product_names
+
+    return render(request, 'retail/recommendation_list.html', {'recommendations': recommendations})
+
+def add_recommendation(request):
+    if request.method == 'POST':
+        form = RecommendationForm(request.POST)
+        if form.is_valid():
+            data = form.cleaned_data
+            data['RecommendedProducts'] = json.loads(data['RecommendedProducts'])  # Convert JSON string to list
+            insert_document('recommendations', data)
+            return redirect('list_recommendations')
+    else:
+        form = RecommendationForm()
+    return render(request, 'retail/recommendation_form.html', {'form': form})
+
+def delete_recommendation(request, recommendation_id):
+    delete_document('recommendations', {'_id': ObjectId(recommendation_id)})
+    return redirect('list_recommendations')
+
+#PROMOTION SYSTEM
+def list_promotion(request):
+    promotions = find_documents('promotion', {})
+    logger.debug(f"Promotions retrieved: {promotions}")
+
+    for promotion in promotions:
+        # Fetch product name from SQL database
+        try:
+            product = Product.objects.get(ProductID=promotion['ProductID'])
+            promotion['ProductName'] = product.ProductName or f"Product ID {promotion['ProductID']} (No Name)"
+        except Product.DoesNotExist:
+            promotion['ProductName'] = f"Product ID {promotion['ProductID']} not found"
+
+    return render(request, 'retail/promotion_list.html', {'promotions': promotions})
+
+def add_promotion(request):
+    if request.method == 'POST':
+        form = PromotionForm(request.POST)
+        if form.is_valid():
+            insert_document('promotion', form.cleaned_data)
+            return redirect('list_promotions')
+    else:
+        form = PromotionForm()
+    return render(request, 'retail/promotion_form.html', {'form': form})
+
+def edit_promotion(request, promotion_id):
+    promotions = find_documents('promotion', {'PromotionID': promotion_id})
+    if not promotions:
+        raise Http404("Promotion not found")
+    
+    promotion = promotions[0]  # There should be only one document with the given PromotionID
+    if request.method == 'POST':
+        form = PromotionForm(request.POST, initial=promotion)
+        if form.is_valid():
+            update_document('promotion', {'PromotionID': promotion_id}, form.cleaned_data)
+            return redirect('list_promotions')
+    else:
+        form = PromotionForm(initial=promotion)
+    return render(request, 'retail/promotion_form.html', {'form': form})
+
+def delete_promotion(request, promotion_id):
+    delete_document('promotion', {'PromotionID': promotion_id})
+    return redirect('list_promotions')
 
 #This will make the user be required to login before they can view the data
 def login_required(view_func):
