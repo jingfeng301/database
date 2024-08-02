@@ -108,58 +108,52 @@ def resolve_ticket(request, ticket_id):
     else:
         raise Http404("Invalid request method")
     
-#REVIEW SYSTEM
 def list_reviews(request):
-    reviews = find_documents('reviews', {})
-    logger.debug(f"Reviews retrieved: {reviews}")
+    filter_form = ReviewFilterForm(request.GET)
+    filter_criteria = {}
+
+    if filter_form.is_valid() and filter_form.cleaned_data['rating']:
+        filter_criteria['Rating'] = int(filter_form.cleaned_data['rating'])
+
+    reviews = find_documents('review', filter_criteria)
+    enriched_reviews = []
 
     for review in reviews:
-        # Ensure date formatting
-        review['ReviewDate'] = review['ReviewDate'].strftime('%Y-%m-%d %H:%M:%S') if 'ReviewDate' in review else ''
-        
-        # Fetch customer name from SQL database
+        review['id'] = str(review['_id'])
         try:
-            customer = Customer.objects.get(CustomerID=review['CustomerID'])
-            review['CustomerName'] = customer.Name or f"Customer ID {review['CustomerID']} (No Name)"
-        except Customer.DoesNotExist:
-            review['CustomerName'] = f"Customer ID {review['CustomerID']} not found"
+            customer = Customer.objects.get(pk=review['CustomerID'])
+            product = Product.objects.get(pk=review['ProductID'])
+            review['CustomerName'] = customer.Name
+            review['ProductName'] = product.ProductName
+        except (Customer.DoesNotExist, Product.DoesNotExist):
+            review['CustomerName'] = "Unknown"
+            review['ProductName'] = "Unknown"
+        enriched_reviews.append(review)
 
-        # Fetch product name from SQL database
-        try:
-            product = Product.objects.get(ProductID=review['ProductID'])
-            review['ProductName'] = product.ProductName or f"Product ID {review['ProductID']} (No Name)"
-        except Product.DoesNotExist:
-            review['ProductName'] = f"Product ID {review['ProductID']} not found"
-
-    return render(request, 'retail/review_list.html', {'reviews': reviews})
+    context = {
+        'review': enriched_reviews,
+        'filter_form': filter_form
+    }
+    return render(request, 'retail/review_list.html', context)
 
 def add_review(request):
     if request.method == 'POST':
         form = ReviewForm(request.POST)
         if form.is_valid():
-            insert_document('reviews', form.cleaned_data)
+            review = form.cleaned_data
+            review['CustomerID'] = form.cleaned_data['CustomerID']
+            review['ProductID'] = form.cleaned_data['ProductID']
+            review['Rating'] = form.cleaned_data['Rating']
+            review['Comment'] = form.cleaned_data['Comment']
+            review['ReviewDate'] = form.cleaned_data['ReviewDate']
+            insert_document('review', review)
             return redirect('list_reviews')
     else:
         form = ReviewForm()
     return render(request, 'retail/review_form.html', {'form': form})
 
-def edit_review(request, review_id):
-    reviews = find_documents('reviews', {'ReviewID': review_id})
-    if not reviews:
-        raise Http404("Review not found")
-    
-    review = reviews[0]  # There should be only one document with the given ReviewID
-    if request.method == 'POST':
-        form = ReviewForm(request.POST, initial=review)
-        if form.is_valid():
-            update_document('reviews', {'ReviewID': review_id}, form.cleaned_data)
-            return redirect('list_reviews')
-    else:
-        form = ReviewForm(initial=review)
-    return render(request, 'retail/review_form.html', {'form': form})
-
 def delete_review(request, review_id):
-    delete_document('reviews', {'ReviewID': review_id})
+    delete_document('review', {'_id': ObjectId(review_id)})
     return redirect('list_reviews')
 
 #RECOMMENDATION SYSTEM

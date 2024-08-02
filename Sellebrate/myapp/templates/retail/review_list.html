@@ -1,24 +1,41 @@
 {% extends "retail/base.html" %}
 
 {% block content %}
-    <h1>Review List</h1>
-    {% if reviews %}
-        <ul>
-            {% for review in reviews %}
-                <li>
-                    <strong>Review ID:</strong> {{ review.ReviewID }}<br>
-                    <strong>Customer ID:</strong> {{ review.CustomerID }}<br>
-                    <strong>Customer Name:</strong> {{ review.CustomerName }}<br>
-                    <strong>Product ID:</strong> {{ review.ProductID }}<br>
-                    <strong>Product Name:</strong> {{ review.ProductName }}<br>
-                    <strong>Rating:</strong> {{ review.Rating }}<br>
-                    <strong>Comment:</strong> {{ review.Comment }}<br>
-                    <strong>Review Date:</strong> {{ review.ReviewDate }}<br>
-                </li>
-                <hr>
-            {% endfor %}
-        </ul>
-    {% else %}
-        <p>No reviews found.</p>
-    {% endif %}
+<h1>Review List</h1>
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+    <a href="{% url 'add_review' %}" class="btn btn-secondary">Add Review</a>
+    <div>
+        <form method="get" action="{% url 'list_reviews' %}" style="display: flex; align-items: center; gap: 10px;">
+            <label for="rating" style="margin-bottom: 0;">Filter by Rating:</label>
+            {{ filter_form.rating }}
+            <button type="submit" class="btn btn-primary">Filter</button>
+        </form>
+    </div>
+</div>
+<table class="table table-striped">
+    <thead class="thead-dark">
+        <tr>
+            <th>Customer</th>
+            <th>Product</th>
+            <th>Rating</th>
+            <th>Comment</th>
+            <th>Review Date</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for review in review %}
+        <tr>
+            <td>{{ review.CustomerName }}</td>
+            <td>{{ review.ProductName }}</td>
+            <td>{{ review.Rating }}</td>
+            <td>{{ review.Comment }}</td>
+            <td>{{ review.ReviewDate }}</td>
+            <td>
+                <a href="{% url 'delete_review' review.id %}" class="btn btn-danger">Delete</a>
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
 {% endblock %}
