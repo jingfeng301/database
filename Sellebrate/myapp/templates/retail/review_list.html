@@ -3,12 +3,12 @@
 {% block content %}
 <h1>Review List</h1>
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <a href="{% url 'add_review' %}" class="btn btn-secondary">Add Review</a>
+    <a href="{% url 'add_review' %}" class="btn btn-primary">Add Review</a>
     <div>
         <form method="get" action="{% url 'list_reviews' %}" style="display: flex; align-items: center; gap: 10px;">
             <label for="rating" style="margin-bottom: 0;">Filter by Rating:</label>
             {{ filter_form.rating }}
-            <button type="submit" class="btn btn-primary">Filter</button>
+            <button type="submit" class="btn btn-secondary">Filter</button>
         </form>
     </div>
 </div>
