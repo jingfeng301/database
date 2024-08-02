@@ -33,6 +33,7 @@ urlpatterns = [
     path('promotion/delete/<str:promotion_id>/', views.delete_promotion, name='delete_promotion'),
      path('recommendation/add/', views.add_recommendation, name='add_recommendation'),
     path('recommendation/list/', views.list_recommendations, name='list_recommendations'),
+    path('recommendation/edit/<str:recommendation_id>/', views.edit_recommendation, name='edit_recommendation'),
     path('recommendation/delete/<str:recommendation_id>/', views.delete_recommendation, name='delete_recommendation'),
     path('review/list/', views.list_reviews, name='list_reviews'),
     path('support_ticket/list/', views.list_support_tickets, name='list_support_tickets'),

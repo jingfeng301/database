@@ -69,10 +69,19 @@ class ReviewForm(forms.Form):
     ReviewDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
 
 class RecommendationForm(forms.Form):
-    RecommendationID = forms.CharField(max_length=100)
-    CustomerID = forms.CharField(max_length=100)
-    RecommendedProducts = forms.CharField(widget=forms.Textarea)  
-    CreatedDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
+    CustomerID = forms.CharField(
+        max_length=100,
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        label='Customer ID'
+    )
+    RecommendedProducts = forms.CharField(
+        widget=forms.Textarea(attrs={'class': 'form-control'}),
+        label='Recommended Products'
+    )
+    CreatedDate = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        label='Created Date'
+    )
     
 class SupportTicketCommentForm(forms.Form):
     Message = forms.CharField(

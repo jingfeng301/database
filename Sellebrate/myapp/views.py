@@ -195,17 +195,42 @@ def add_recommendation(request):
         form = RecommendationForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            data['RecommendedProducts'] = json.loads(data['RecommendedProducts'])  # Convert JSON string to list
-            insert_document('recommendations', data)
+            data['RecommendationID'] = str(ObjectId())
+            data['RecommendedProducts'] = [item.strip() for item in data['RecommendedProducts'].split(',')] 
+            
+            data['CreatedDate'] = datetime.combine(data['CreatedDate'], datetime.min.time())
+            
+            insert_document('recommendation', data)
             return redirect('list_recommendations')
     else:
-        form = RecommendationForm()
+        form = RecommendationForm()        
+        
     return render(request, 'retail/recommendation_form.html', {'form': form})
 
 def delete_recommendation(request, recommendation_id):
     delete_document('recommendations', {'_id': ObjectId(recommendation_id)})
     return redirect('list_recommendations')
 
+def edit_recommendation(request, recommendation_id):
+    recommendations = find_documents('recommendation', {'_id': ObjectId(recommendation_id)})
+    if not recommendations:
+        raise Http404("Recommendation not found")
+    
+    recommendation = recommendations[0]  # There should be only one document with the given _id
+    recommendation['RecommendedProducts'] = ', '.join(recommendation['RecommendedProducts'])
+    
+    if request.method == 'POST':
+        form = RecommendationForm(request.POST, initial=recommendation)
+        if form.is_valid():
+            data = form.cleaned_data
+            data['RecommendedProducts'] = [item.strip() for item in data['RecommendedProducts'].split(',')] 
+            data['CreatedDate'] = datetime.combine(data['CreatedDate'], datetime.min.time())
+            update_document('recommendation', {'_id': ObjectId(recommendation_id)}, data)
+            return redirect('list_recommendations')
+    else:
+        form = RecommendationForm(initial=recommendation)
+    return render(request, 'retail/recommendation_form.html', {'form': form, 'recommendation_id': recommendation_id})
+    
 #PROMOTION SYSTEM
 def list_promotion(request):
     promotions = find_documents('promotion', {})

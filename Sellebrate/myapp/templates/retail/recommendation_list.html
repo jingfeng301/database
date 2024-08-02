@@ -27,6 +27,7 @@
                     </td>
                     <td>{{ recommendation.CreatedDate }}</td>
                     <td>
+                        <a href="{% url 'edit_recommendation' recommendation.id %}" class="btn btn-primary">Edit</a>
                         <a href="{% url 'delete_recommendation' recommendation.id %}" class="btn btn-danger">Delete</a>
                     </td>
                 </tr>

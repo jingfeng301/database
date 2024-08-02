@@ -1,10 +1,10 @@
 {% extends "retail/base.html" %}
 
 {% block content %}
-    <h1>{% if form.initial.RecommendationID %}Edit{% else %}Add{% endif %} Recommendation</h1>
+    <h1>{% if recommendation_id %}Edit{% else %}Add{% endif %} Recommendation</h1>
     <form method="post">
         {% csrf_token %}
         {{ form.as_p }}
-        <button type="submit" class="btn btn-success">{% if form.initial.RecommendationID %}Update{% else %}Add{% endif %}</button>
+        <button type="submit" class="btn btn-success">{% if recommendation_id %}Update{% else %}Add{% endif %}</button>
     </form>
 {% endblock %}
