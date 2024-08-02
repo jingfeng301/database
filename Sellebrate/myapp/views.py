@@ -225,8 +225,15 @@ def add_promotion(request):
     if request.method == 'POST':
         form = PromotionForm(request.POST)
         if form.is_valid():
-            insert_document('promotion', form.cleaned_data)
-            return redirect('list_promotions')
+            data = form.cleaned_data
+            data['PromotionID'] = str(ObjectId())
+            
+            # Convert StartDate and EndDate to datetime
+            data['StartDate'] = datetime.combine(data['StartDate'], datetime.min.time())
+            data['EndDate'] = datetime.combine(data['EndDate'], datetime.min.time())
+            
+            insert_document('promotion', data)
+            return redirect('list_promotion')
     else:
         form = PromotionForm()
     return render(request, 'retail/promotion_form.html', {'form': form})
@@ -240,15 +247,20 @@ def edit_promotion(request, promotion_id):
     if request.method == 'POST':
         form = PromotionForm(request.POST, initial=promotion)
         if form.is_valid():
-            update_document('promotion', {'PromotionID': promotion_id}, form.cleaned_data)
-            return redirect('list_promotions')
+            data = form.cleaned_data
+            # Convert StartDate and EndDate to datetime
+            data['StartDate'] = datetime.combine(data['StartDate'], datetime.min.time())
+            data['EndDate'] = datetime.combine(data['EndDate'], datetime.min.time())
+            
+            update_document('promotion', {'PromotionID': promotion_id}, data)
+            return redirect('list_promotion')
     else:
         form = PromotionForm(initial=promotion)
-    return render(request, 'retail/promotion_form.html', {'form': form})
+    return render(request, 'retail/promotion_form.html', {'form': form, 'promotion_id': promotion_id})
 
 def delete_promotion(request, promotion_id):
     delete_document('promotion', {'PromotionID': promotion_id})
-    return redirect('list_promotions')
+    return redirect('list_promotion')
 
 def login_required(view_func):
     def wrapper(request, *args, **kwargs):

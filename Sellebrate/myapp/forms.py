@@ -37,13 +37,29 @@ class PaymentmethodForm(forms.ModelForm):
         fields = ['CustomerID', 'MethodType', 'Provider', 'ExpiryDate']
 
 class PromotionForm(forms.Form):
-    PromotionID = forms.CharField(max_length=100)
-    ProductID = forms.CharField(max_length=100)
-    PromotionName = forms.CharField(max_length=100)
-    StartDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
-    EndDate = forms.DateField(widget=forms.DateInput(attrs={'type': 'date'}))
-    DiscountPercentage = forms.FloatField()
-
+    ProductID = forms.CharField(
+        max_length=100, 
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        label='Product ID'
+    )
+    PromotionName = forms.CharField(
+        max_length=100, 
+        widget=forms.TextInput(attrs={'class': 'form-control'}),
+        label='Promotion Name'
+    )
+    StartDate = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        label='Start Date'
+    )
+    EndDate = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+        label='End Date'
+    )
+    DiscountPercentage = forms.FloatField(
+        widget=forms.NumberInput(attrs={'class': 'form-control'}),
+        label='Discount Percentage'
+    )
+    
 class ReviewForm(forms.Form):
     ReviewID = forms.CharField(max_length=100)
     CustomerID = forms.CharField(max_length=100)
