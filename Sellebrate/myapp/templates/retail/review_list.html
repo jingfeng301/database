@@ -6,9 +6,15 @@
     <a href="{% url 'add_review' %}" class="btn btn-primary">Add Review</a>
     <div>
         <form method="get" action="{% url 'list_reviews' %}" style="display: flex; align-items: center; gap: 10px;">
-            <label for="rating" style="margin-bottom: 0;">Filter by Rating:</label>
-            {{ filter_form.rating }}
-            <button type="submit" class="btn btn-secondary">Filter</button>
+            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 0;">
+                <label for="rating" style="margin-bottom: 0; margin-right: 5px;">Filter by Rating:</label>
+                {{ filter_form.rating }}
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 0;">
+                <label for="search_query" style="margin-bottom: 0; margin-right: 5px;">Search:</label>
+                <input type="text" name="search_query" id="search_query" class="form-control" value="{{ search_query }}">
+            </div>
+            <button type="submit" class="btn btn-secondary" style="height: 38px;">Filter</button>
         </form>
     </div>
 </div>

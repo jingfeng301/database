@@ -123,7 +123,8 @@ class SupportTicketCommentForm(forms.Form):
 
 class ReviewFilterForm(forms.Form):
     rating = forms.ChoiceField(
-        choices=[('', 'All')] + [(str(i), str(i)) for i in range(1, 6)],
-        required=False,
-        label='Filter by Rating'
+        choices=[('', 'All')] + [(i, i) for i in range(1, 6)],
+        required=False
     )
+    start_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))
+    end_date = forms.DateField(required=False, widget=forms.TextInput(attrs={'type': 'date'}))

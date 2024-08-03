@@ -121,24 +121,46 @@ def list_reviews(request):
     if filter_form.is_valid() and filter_form.cleaned_data['rating']:
         filter_criteria['Rating'] = int(filter_form.cleaned_data['rating'])
 
-    reviews = find_documents('review', filter_criteria)
-    enriched_reviews = []
+    search_query = request.GET.get('search_query', '')
+    if search_query:
+        reviews = find_documents('review', filter_criteria)
+        enriched_reviews = []
 
-    for review in reviews:
-        review['id'] = str(review['_id'])
-        try:
-            customer = Customer.objects.get(pk=review['CustomerID'])
-            product = Product.objects.get(pk=review['ProductID'])
-            review['CustomerName'] = customer.Name
-            review['ProductName'] = product.ProductName
-        except (Customer.DoesNotExist, Product.DoesNotExist):
-            review['CustomerName'] = "Unknown"
-            review['ProductName'] = "Unknown"
-        enriched_reviews.append(review)
+        for review in reviews:
+            review['id'] = str(review['_id'])
+            try:
+                customer = Customer.objects.get(pk=review['CustomerID'])
+                product = Product.objects.get(pk=review['ProductID'])
+                review['CustomerName'] = customer.Name
+                review['ProductName'] = product.ProductName
+            except (Customer.DoesNotExist, Product.DoesNotExist):
+                review['CustomerName'] = "Unknown"
+                review['ProductName'] = "Unknown"
+
+            if (search_query.lower() in review['CustomerName'].lower() or
+                search_query.lower() in review['ProductName'].lower() or
+                search_query.lower() in review['Comment'].lower()):
+                enriched_reviews.append(review)
+    else:
+        reviews = find_documents('review', filter_criteria)
+        enriched_reviews = []
+
+        for review in reviews:
+            review['id'] = str(review['_id'])
+            try:
+                customer = Customer.objects.get(pk=review['CustomerID'])
+                product = Product.objects.get(pk=review['ProductID'])
+                review['CustomerName'] = customer.Name
+                review['ProductName'] = product.ProductName
+            except (Customer.DoesNotExist, Product.DoesNotExist):
+                review['CustomerName'] = "Unknown"
+                review['ProductName'] = "Unknown"
+            enriched_reviews.append(review)
 
     context = {
         'review': enriched_reviews,
-        'filter_form': filter_form
+        'filter_form': filter_form,
+        'search_query': search_query
     }
     return render(request, 'retail/review_list.html', context)
 
