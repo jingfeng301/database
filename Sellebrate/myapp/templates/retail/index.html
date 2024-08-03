@@ -464,6 +464,77 @@ Dashboard - Sellebrate
       {% endfor %}
     </tbody>
   </table>
+  <h2>Average Rating for Each Product</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Average Rating</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.average_ratings %}
+      <tr>
+        <td>{{ item.product_id }}</td>
+        <td>{{ item.average_rating }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Top Rated Products</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Average Rating</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.top_rated_products %}
+      <tr>
+        <td>{{ item.product_id }}</td>
+        <td>{{ item.average_rating }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Most Reviewed Products</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Review Count</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.most_reviewed_products %}
+      <tr>
+        <td>{{ item.product_id }}</td>
+        <td>{{ item.review_count }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Top Rated Products for the past year</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Average Rating</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.top_rated_for_the_past_year %}
+      <tr>
+        <td>{{ item.product_id }}</td>
+        <td>{{ item.average_rating }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
   {% else %}
   <p>Please log in to view insights and analytics.</p>
   {% endif %}
