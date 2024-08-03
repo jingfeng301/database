@@ -15,46 +15,79 @@ import tabulate
 import json
 from .mongo_utils import *
 import logging
-from bson import ObjectId
+from bson import ObjectId, json_util
 from django.http import Http404
 from django.shortcuts import render
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 import os
 
+
 logger = logging.getLogger(__name__)
 
 client = MongoClient(settings.MONGO_DB_URI)
 mongo_db = client[settings.MONGO_DB_NAME]
 
-#SUPPORT SYSTEM
 def list_support_tickets(request):
+    # Retrieve support tickets and comments
     support_tickets = find_documents('support_tickets', {})
-    support_ticket_comments = find_documents('support_ticket_comments', {})
-    logger.debug(f"Support Tickets retrieved: {support_tickets}")
-    logger.debug(f"Support Ticket Comments retrieved: {support_ticket_comments}")
+    
+    # Calculate resolved and unresolved ticket counts
+    resolved_count = sum(ticket.get('IsIssueResolved', False) for ticket in support_tickets)
+    unresolved_count = len(support_tickets) - resolved_count
 
-    # Organize comments by ticket ID
-    comments_by_ticket = {}
-    for comment in support_ticket_comments:
-        ticket_id = comment['TicketID']
-        if ticket_id not in comments_by_ticket:
-            comments_by_ticket[ticket_id] = []
-        comments_by_ticket[ticket_id].append(comment)
+    # Calculate customer satisfaction rates
+    satisfaction_counts = {'Excellent': 0, 'Good': 0, 'Fair': 0, 'Poor': 0}
+    total_resolution_time = 0
+    resolved_tickets_count = 0
 
-    # Add comments and customer name to each support ticket
     for ticket in support_tickets:
-        ticket_id = ticket['TicketID']
-        ticket['Comments'] = comments_by_ticket.get(ticket_id, [])
+        # Calculate satisfaction rates
+        rating = ticket.get('CustomerRating', 'Unknown')
+        if rating in satisfaction_counts:
+            satisfaction_counts[rating] += 1
+        
+        # Calculate resolution time
+        if ticket.get('IsIssueResolved', False):
+            resolved_tickets_count += 1
+            created_date = ticket.get('CreatedDate')
+            resolved_date = ticket.get('ResolvedDate')
 
-        # Fetch customer name from SQL database
-        try:
-            customer = Customer.objects.get(CustomerID=ticket['CustomerID'])
-            ticket['CustomerName'] = customer.Name or f"Customer ID {ticket['CustomerID']} (No Name)"
-        except Customer.DoesNotExist:
-            ticket['CustomerName'] = f"Customer ID {ticket['CustomerID']} not found"
+            # Ensure the dates are available
+            if created_date and resolved_date:
+                # Directly use datetime objects
+                resolution_time = (resolved_date - created_date).total_seconds()
+                total_resolution_time += resolution_time
 
-    return render(request, 'retail/support_ticket_list.html', {'support_tickets': support_tickets})
+    # Calculate average resolution time in days and hours
+    if resolved_tickets_count > 0:
+        average_resolution_time_hours = total_resolution_time / resolved_tickets_count / 3600
+        days = int(average_resolution_time_hours // 24)
+        hours = int(average_resolution_time_hours % 24)
+    else:
+        days = 0
+        hours = 0
+
+    # Prepare data for Chart.js
+    ratings = list(satisfaction_counts.keys())
+    counts = list(satisfaction_counts.values())
+
+    # Convert data to JSON format for Chart.js
+    ratings_json = json_util.dumps(ratings)
+    counts_json = json_util.dumps(counts)
+
+    # Pass data to the template
+    context = {
+        'support_tickets': support_tickets,
+        'resolved_count': resolved_count,
+        'unresolved_count': unresolved_count,
+        'average_resolution_time_days': days,
+        'average_resolution_time_hours': hours,
+        'ratings_json': ratings_json,
+        'counts_json': counts_json,
+    }
+
+    return render(request, 'retail/support_ticket_list.html', context)
 
 def view_ticket(request, ticket_id):
     # Retrieve the specific support ticket
@@ -114,7 +147,8 @@ def resolve_ticket(request, ticket_id):
         return redirect('view_ticket', ticket_id=ticket_id)
     else:
         raise Http404("Invalid request method")
-    
+
+#REVIEW SYSTEM
 def list_reviews(request):
     filter_form = ReviewFilterForm(request.GET)
     filter_criteria = {}
