@@ -2,36 +2,65 @@
 
 {% block content %}
     <h1>Recommendation List</h1>
-    <a href="{% url 'add_recommendation' %}" class="btn btn-primary mb-4">Add Recommendation</a>
-    <table class="table table-striped">
-        <thead class="thead-dark">
-            <tr>
-                <th>Customer ID</th>
-                <th>Customer Name</th>
-                <th>Recommended Products</th>
-                <th>Created Date</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for recommendation in recommendations %}
+    <form method="GET" action="{% url 'list_recommendations' %}">
+        <div class="form-group">
+            <label for="recommendation_filter">Select Recommendation Filter:</label>
+            <select name="recommendation_filter" id="recommendation_filter" class="form-control" onchange="this.form.submit()">
+                <option value="popularity" {% if filter == 'popularity' %}selected{% endif %}>Popularity</option>
+                <option value="top_rated" {% if filter == 'top_rated' %}selected{% endif %}>Top-Rated</option>
+            </select>
+        </div>
+    </form>
+
+    {% if filter == 'popularity' %}
+        <h2>Recommended Highest Popularity Products</h2>
+        <table class="table table-striped">
+            <thead class="thead-dark">
                 <tr>
-                    <td>{{ recommendation.CustomerID }}</td>
-                    <td>{{ recommendation.CustomerName }}</td>
-                    <td>
-                        <ul>
-                            {% for product in recommendation.ProductNames %}
-                                <li>{{ product }}</li>
-                            {% endfor %}
-                        </ul>
-                    </td>
-                    <td>{{ recommendation.CreatedDate }}</td>
-                    <td>
-                        <a href="{% url 'edit_recommendation' recommendation.id %}" class="btn btn-primary">Edit</a>
-                        <a href="{% url 'delete_recommendation' recommendation.id %}" class="btn btn-danger">Delete</a>
-                    </td>
+                    <th>Rank</th>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
                 </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                {% for item in insights.recommended_highest_popularity_products %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.product_id }}</td>
+                    <td>{{ item.product_name }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="3">No popular products found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% elif filter == 'top_rated' %}
+        <h2>Recommended Top Rated Products</h2>
+        <table class="table table-striped">
+            <thead class="thead-dark">
+                <tr>
+                    <th>Rank</th>
+                    <th>Product ID</th>
+                    <th>Product Name</th>
+                    <th>Average Rating</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in insights.recommended_top_rated_products %}
+                <tr>
+                    <td>{{ forloop.counter }}</td>
+                    <td>{{ item.product_id }}</td>
+                    <td>{{ item.product_name }}</td>
+                    <td>{{ item.average_rating }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4">No top-rated products found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% endif %}
 {% endblock %}

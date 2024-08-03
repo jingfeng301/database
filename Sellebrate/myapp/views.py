@@ -26,6 +26,9 @@ from dotenv import load_dotenv
 load_dotenv()
 logger = logging.getLogger(__name__)
 
+client = MongoClient(settings.MONGO_DB_URI)
+mongo_db = client[settings.MONGO_DB_NAME]
+
 #SUPPORT SYSTEM
 def list_support_tickets(request):
     support_tickets = find_documents('support_tickets', {})
@@ -186,72 +189,63 @@ def delete_review(request, review_id):
 
 #RECOMMENDATION SYSTEM
 def list_recommendations(request):
-    recommendations = find_documents('recommendation', {})
-    logger.debug(f"Recommendations retrieved: {recommendations}")
+    filter_type = request.GET.get('recommendation_filter', 'popularity')
+    recommendations = {
+        'recommended_highest_popularity_products': [],
+        'recommended_top_rated_products': []
+    }
 
-    for recommendation in recommendations:
-        # Add a new field for _id that does not start with an underscore
-        recommendation['id'] = str(recommendation['_id'])
-        
-        # Fetch customer name from SQL database
-        try:
-            customer = Customer.objects.get(CustomerID=recommendation['CustomerID'])
-            recommendation['CustomerName'] = customer.Name or f"Customer ID {recommendation['CustomerID']} (No Name)"
-        except Customer.DoesNotExist:
-            recommendation['CustomerName'] = f"Customer ID {recommendation['CustomerID']} not found"
-        
-        # Fetch product names for each recommended product
-        product_names = []
-        for product_id in recommendation['RecommendedProducts']:
-            try:
-                product = Product.objects.get(ProductID=product_id)
-                product_names.append(product.ProductName)
-            except Product.DoesNotExist:
-                product_names.append(f"Product ID {product_id} not found")
-        recommendation['ProductNames'] = product_names
+    if filter_type == 'popularity':
+        with connection.cursor() as cursor:
+            cursor.execute("""
+                SELECT 
+                    od.ProductID as product_id, 
+                    SUM(od.Quantity) as total_quantity, 
+                    p.ProductName as product_name
+                FROM orderdetails od
+                JOIN products p ON od.ProductID = p.ProductID
+                GROUP BY od.ProductID, p.ProductName
+                ORDER BY total_quantity DESC
+                LIMIT 5
+            """)
+            top_products = cursor.fetchall()
 
-    return render(request, 'retail/recommendation_list.html', {'recommendations': recommendations})
+        recommendations['recommended_highest_popularity_products'] = [
+            {'product_id': product[0], 'product_name': product[2]}
+            for product in top_products
+        ]
 
-def add_recommendation(request):
-    if request.method == 'POST':
-        form = RecommendationForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            data['RecommendationID'] = str(ObjectId())
-            data['RecommendedProducts'] = [item.strip() for item in data['RecommendedProducts'].split(',')] 
-            
-            data['CreatedDate'] = datetime.combine(data['CreatedDate'], datetime.min.time())
-            
-            insert_document('recommendation', data)
-            return redirect('list_recommendations')
-    else:
-        form = RecommendationForm()        
-        
-    return render(request, 'retail/recommendation_form.html', {'form': form})
+    elif filter_type == 'top_rated':
+        top_rated_products = mongo_db.review.aggregate([
+            {"$group": {"_id": "$ProductID", "average_rating": {"$avg": "$Rating"}}},
+            {"$sort": {"average_rating": -1}},
+            {"$limit": 5}
+        ])
+        top_rated_products = list(top_rated_products)
+        top_rated_product_ids = [str(product["_id"]) for product in top_rated_products]
 
-def delete_recommendation(request, recommendation_id):
-    delete_document('recommendations', {'_id': ObjectId(recommendation_id)})
-    return redirect('list_recommendations')
+        with connection.cursor() as cursor:
+            format_strings = ','.join(['%s'] * len(top_rated_product_ids))
+            cursor.execute(f"""
+                SELECT ProductID as product_id, ProductName as product_name
+                FROM products
+                WHERE ProductID IN ({format_strings})
+            """, tuple(top_rated_product_ids))
+            top_rated_products_info = cursor.fetchall()
 
-def edit_recommendation(request, recommendation_id):
-    recommendations = find_documents('recommendation', {'_id': ObjectId(recommendation_id)})
-    if not recommendations:
-        raise Http404("Recommendation not found")
-    
-    recommendation = recommendations[0]  # There should be only one document with the given _id
-    recommendation['RecommendedProducts'] = ', '.join(recommendation['RecommendedProducts'])
-    
-    if request.method == 'POST':
-        form = RecommendationForm(request.POST, initial=recommendation)
-        if form.is_valid():
-            data = form.cleaned_data
-            data['RecommendedProducts'] = [item.strip() for item in data['RecommendedProducts'].split(',')] 
-            data['CreatedDate'] = datetime.combine(data['CreatedDate'], datetime.min.time())
-            update_document('recommendation', {'_id': ObjectId(recommendation_id)}, data)
-            return redirect('list_recommendations')
-    else:
-        form = RecommendationForm(initial=recommendation)
-    return render(request, 'retail/recommendation_form.html', {'form': form, 'recommendation_id': recommendation_id})
+        rating_dict = {str(product["_id"]): product["average_rating"] for product in top_rated_products}
+
+        recommendations['recommended_top_rated_products'] = [
+            {'product_id': product[0], 'product_name': product[1], 'average_rating': rating_dict.get(product[0], 'N/A')}
+            for product in top_rated_products_info
+        ]
+
+    context = {
+        'insights': recommendations,
+        'filter': filter_type
+    }
+
+    return render(request, 'retail/recommendation_list.html', context)
     
 #PROMOTION SYSTEM
 def list_promotion(request):
@@ -913,6 +907,50 @@ def index(request):
             "most_reviewed_products": most_reviewed_products,
             "top_rated_for_the_past_year": top_rated_for_the_past_year
         })
+
+                # Fetch recommended products
+        cursor.execute("""
+            SELECT 
+                od.ProductID as product_id, 
+                SUM(od.Quantity) as total_quantity, 
+                p.ProductName as product_name
+            FROM orderdetails od
+            JOIN products p ON od.ProductID = p.ProductID
+            GROUP BY od.ProductID, p.ProductName
+            ORDER BY total_quantity DESC
+            LIMIT 5
+        """)
+        top_products = cursor.fetchall()
+        insights['recommended_highest_popularity_products'] = [
+            {'product_id': product[0], 'product_name': product[2]}
+            for product in top_products
+        ]
+
+        # Fetch recommended top rated products
+        top_rated_products = mongo_db.review.aggregate([
+        {"$group": {"_id": "$ProductID", "average_rating": {"$avg": "$Rating"}}},
+        {"$sort": {"average_rating": -1}},
+        {"$limit": 5}
+        ])
+        top_rated_products = list(top_rated_products)
+
+        top_rated_product_ids = [str(product["_id"]) for product in top_rated_products]
+
+        with connection.cursor() as cursor:
+            format_strings = ','.join(['%s'] * len(top_rated_product_ids))
+            cursor.execute(f"""
+                SELECT ProductID as product_id, ProductName as product_name
+                FROM products
+                WHERE ProductID IN ({format_strings})
+            """, tuple(top_rated_product_ids))
+            top_rated_products_info = cursor.fetchall()
+
+        rating_dict = {str(product["_id"]): product["average_rating"] for product in top_rated_products}
+
+        insights['recommended_top_rated_products'] = [
+            {'product_id': product[0], 'product_name': product[1], 'average_rating': rating_dict.get(product[0], 'N/A')}
+            for product in top_rated_products_info
+        ]
 
     # print(insights)  # Print insights to verify data, for logging purposes
 
