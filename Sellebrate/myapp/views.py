@@ -907,7 +907,7 @@ def index(request):
             item['product_id'] = item.pop('_id')
         for item in consistent_ratings:
             item['product_id'] = item.pop('_id')
-        print(consistent_ratings)
+
         insights.update({
             "average_ratings": average_ratings,
             "top_rated_products": top_rated_products,
