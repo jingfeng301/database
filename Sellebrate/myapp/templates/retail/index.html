@@ -535,6 +535,24 @@ Dashboard - Sellebrate
       {% endfor %}
     </tbody>
   </table>
+
+  <h2>Products with Most Consistent Ratings</h2>
+  <table class="table table-striped">
+    <thead class="thead-dark">
+      <tr>
+        <th>Product ID</th>
+        <th>Rating Variance</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in insights.consistent_ratings %}
+      <tr>
+        <td>{{ item.product_id }}</td>
+        <td>{{ item.rating_variance }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
   
   <h2>Recommended Highest Popularity Products</h2>
   <table class="table table-striped">

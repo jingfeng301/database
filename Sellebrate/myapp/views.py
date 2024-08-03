@@ -872,16 +872,29 @@ def index(request):
         
         one_year_ago = datetime.now() - timedelta(days=365)
         top_rated_for_the_past_year_pipeline = [
-        {"$match": {"ReviewDate": {"$gte": one_year_ago}}},
-        {"$group": {"_id": "$ProductID", "average_rating": {"$avg": "$Rating"}}},
-        {"$sort": {"average_rating": -1}},
-        {"$limit": 5}
+            {"$match": {"ReviewDate": {"$gte": one_year_ago}}},
+            {"$group": {"_id": "$ProductID", "average_rating": {"$avg": "$Rating"}}},
+            {"$sort": {"average_rating": -1}},
+            {"$limit": 5}
         ]
+        
+        consistent_ratings = mongo_db.review.aggregate([
+            # Filter products with at least 2 reviews
+            {"$group": {
+                "_id": "$ProductID",
+                "rating_variance": {"$stdDevSamp": "$Rating"},
+                "count": {"$sum": 1}
+            }},
+            {"$match": {"count": {"$gte": 2}}},  # Only include products with at least 2 reviews
+            {"$sort": {"rating_variance": 1}},  # Sort in ascending order to get the most consistent ratings
+            {"$limit": 5}
+        ])
 
         average_ratings = list(mongo_db.review.aggregate(average_rating_pipeline))
         top_rated_products = list(mongo_db.review.aggregate(top_rated_products_pipeline))
         most_reviewed_products = list(mongo_db.review.aggregate(most_reviewed_products_pipeline))
         top_rated_for_the_past_year = list(mongo_db.review.aggregate(top_rated_for_the_past_year_pipeline))
+        consistent_ratings = list(consistent_ratings)
 
         # Rename _id field to product_id
         for item in average_ratings:
@@ -892,12 +905,15 @@ def index(request):
             item['product_id'] = item.pop('_id')
         for item in top_rated_for_the_past_year:
             item['product_id'] = item.pop('_id')
-
+        for item in consistent_ratings:
+            item['product_id'] = item.pop('_id')
+        print(consistent_ratings)
         insights.update({
             "average_ratings": average_ratings,
             "top_rated_products": top_rated_products,
             "most_reviewed_products": most_reviewed_products,
-            "top_rated_for_the_past_year": top_rated_for_the_past_year
+            "top_rated_for_the_past_year": top_rated_for_the_past_year,
+            "consistent_ratings": consistent_ratings
         })
 
                 # Fetch recommended products
