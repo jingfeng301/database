@@ -122,45 +122,45 @@ def list_reviews(request):
         filter_criteria['Rating'] = int(filter_form.cleaned_data['rating'])
 
     search_query = request.GET.get('search_query', '')
-    if search_query:
-        reviews = find_documents('review', filter_criteria)
-        enriched_reviews = []
+    start_date_str = request.GET.get('start_date', '')
+    end_date_str = request.GET.get('end_date', '')
 
-        for review in reviews:
-            review['id'] = str(review['_id'])
-            try:
-                customer = Customer.objects.get(pk=review['CustomerID'])
-                product = Product.objects.get(pk=review['ProductID'])
-                review['CustomerName'] = customer.Name
-                review['ProductName'] = product.ProductName
-            except (Customer.DoesNotExist, Product.DoesNotExist):
-                review['CustomerName'] = "Unknown"
-                review['ProductName'] = "Unknown"
+    if start_date_str and end_date_str:
+        try:
+            start_date = datetime.strptime(start_date_str, '%Y-%m-%d')
+            end_date = datetime.strptime(end_date_str, '%Y-%m-%d')
+            filter_criteria['ReviewDate'] = {
+                '$gte': start_date,
+                '$lte': end_date
+            }
+        except ValueError as e:
+            messages.error(request, f"Error parsing dates: {str(e)}")
+    
+    reviews = find_documents('review', filter_criteria)
+    enriched_reviews = []
 
-            if (search_query.lower() in review['CustomerName'].lower() or
-                search_query.lower() in review['ProductName'].lower() or
-                search_query.lower() in review['Comment'].lower()):
-                enriched_reviews.append(review)
-    else:
-        reviews = find_documents('review', filter_criteria)
-        enriched_reviews = []
+    for review in reviews:
+        review['id'] = str(review['_id'])
+        try:
+            customer = Customer.objects.get(pk=review['CustomerID'])
+            product = Product.objects.get(pk=review['ProductID'])
+            review['CustomerName'] = customer.Name
+            review['ProductName'] = product.ProductName
+        except (Customer.DoesNotExist, Product.DoesNotExist):
+            review['CustomerName'] = "Unknown"
+            review['ProductName'] = "Unknown"
 
-        for review in reviews:
-            review['id'] = str(review['_id'])
-            try:
-                customer = Customer.objects.get(pk=review['CustomerID'])
-                product = Product.objects.get(pk=review['ProductID'])
-                review['CustomerName'] = customer.Name
-                review['ProductName'] = product.ProductName
-            except (Customer.DoesNotExist, Product.DoesNotExist):
-                review['CustomerName'] = "Unknown"
-                review['ProductName'] = "Unknown"
+        if (search_query.lower() in review['CustomerName'].lower() or
+            search_query.lower() in review['ProductName'].lower() or
+            search_query.lower() in review['Comment'].lower()):
             enriched_reviews.append(review)
-
+    
     context = {
         'review': enriched_reviews,
         'filter_form': filter_form,
-        'search_query': search_query
+        'search_query': search_query,
+        'start_date': start_date_str,
+        'end_date': end_date_str,
     }
     return render(request, 'retail/review_list.html', context)
 

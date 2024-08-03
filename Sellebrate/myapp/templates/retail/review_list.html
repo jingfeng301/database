@@ -3,18 +3,29 @@
 {% block content %}
 <h1>Review List</h1>
 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-    <a href="{% url 'add_review' %}" class="btn btn-primary">Add Review</a>
-    <div>
-        <form method="get" action="{% url 'list_reviews' %}" style="display: flex; align-items: center; gap: 10px;">
+    <div style="flex-shrink: 0; margin-right: 10px;">
+        <a href="{% url 'add_review' %}" class="btn btn-primary">Add Review</a>
+    </div>
+    <div style="flex-grow: 1;">
+        <form id="filter-form" method="get" action="{% url 'list_reviews' %}" style="display: flex; align-items: center; gap: 10px;">
             <div class="form-group" style="display: flex; align-items: center; margin-bottom: 0;">
-                <label for="rating" style="margin-bottom: 0; margin-right: 5px;">Filter by Rating:</label>
+                <label for="rating" style="margin-bottom: 0; margin-right: -18px;">Filter by Rating:</label>
                 {{ filter_form.rating }}
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 0;">
+                <label for="start_date" style="margin-bottom: 0; margin-right: 5px;">Start Date:</label>
+                <input type="date" name="start_date" id="start_date" class="form-control" value="{{ start_date }}">
+            </div>
+            <div class="form-group" style="display: flex; align-items: center; margin-bottom: 0;">
+                <label for="end_date" style="margin-bottom: 0; margin-right: 5px;">End Date:</label>
+                <input type="date" name="end_date" id="end_date" class="form-control" value="{{ end_date }}">
             </div>
             <div class="form-group" style="display: flex; align-items: center; margin-bottom: 0;">
                 <label for="search_query" style="margin-bottom: 0; margin-right: 5px;">Search:</label>
                 <input type="text" name="search_query" id="search_query" class="form-control" value="{{ search_query }}">
             </div>
             <button type="submit" class="btn btn-secondary" style="height: 38px;">Filter</button>
+            <button type="button" class="btn btn-warning" style="height: 38px; color: white;" onclick="clearFilters()">Clear</button>
         </form>
     </div>
 </div>
@@ -44,4 +55,11 @@
         {% endfor %}
     </tbody>
 </table>
+
+<script>
+function clearFilters() {
+    document.getElementById('filter-form').reset();
+    window.location.href = "{% url 'list_reviews' %}";
+}
+</script>
 {% endblock %}
