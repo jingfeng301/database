@@ -9,7 +9,7 @@ Hence, Sell-ebrate seeks to sell and manage products using a web application to 
 Copy and paste .env.template to .env and update your DB credentials in .env
 
 ```
-pip install django django-environ mysqlclient tabulate pandas python-dotenv
+pip install django django-environ mysqlclient tabulate pandas
 
 python manage.py migrate
 ```

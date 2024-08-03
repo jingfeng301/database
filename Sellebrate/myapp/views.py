@@ -21,9 +21,7 @@ from django.shortcuts import render
 from pymongo import MongoClient
 from datetime import datetime, timedelta
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
 logger = logging.getLogger(__name__)
 
 client = MongoClient(settings.MONGO_DB_URI)
@@ -840,13 +838,7 @@ def index(request):
             for row in stock_turnover_rate
         ]
 
-        # For NoSQL insights on Reviews
-        mongo_uri = os.getenv("MONGO_DB_URI")
-        db_name = os.getenv("MONGO_DB_NAME")
-        
-        client = MongoClient(mongo_uri)
-        db = client[db_name]
-
+        # For NoSQL insights on Reviews  
         average_rating_pipeline = [
             {"$group": {"_id": "$ProductID", "average_rating": {"$avg": "$Rating"}}}
         ]
@@ -886,10 +878,10 @@ def index(request):
         {"$limit": 5}
         ]
 
-        average_ratings = list(db.review.aggregate(average_rating_pipeline))
-        top_rated_products = list(db.review.aggregate(top_rated_products_pipeline))
-        most_reviewed_products = list(db.review.aggregate(most_reviewed_products_pipeline))
-        top_rated_for_the_past_year = list(db.review.aggregate(top_rated_for_the_past_year_pipeline))
+        average_ratings = list(mongo_db.review.aggregate(average_rating_pipeline))
+        top_rated_products = list(mongo_db.review.aggregate(top_rated_products_pipeline))
+        most_reviewed_products = list(mongo_db.review.aggregate(most_reviewed_products_pipeline))
+        top_rated_for_the_past_year = list(mongo_db.review.aggregate(top_rated_for_the_past_year_pipeline))
 
         # Rename _id field to product_id
         for item in average_ratings:
