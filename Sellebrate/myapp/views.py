@@ -994,6 +994,23 @@ def index(request):
             for product in top_rated_products_info
         ]
 
+        upcoming_promotions = mongo_db.promotion.aggregate([
+        {"$match": {"StartDate": {"$gte": datetime.now()} } },
+        {"$sort": {"StartDate": 1}},
+        {"$limit": 5}
+        ])
+        upcoming_promotions = list(upcoming_promotions)
+
+        for promotion in upcoming_promotions:
+            try:
+                product = Product.objects.get(ProductID=promotion['ProductID'])
+                promotion['ProductName'] = product.ProductName or f"Product ID {promotion['ProductID']} (No Name)"
+                promotion.pop('_id')
+            except Product.DoesNotExist:
+                promotion['ProductName'] = f"Product ID {promotion['ProductID']} not found"
+
+        insights['upcoming_promotions'] = upcoming_promotions
+
     # print(insights)  # Print insights to verify data, for logging purposes
 
     return render(request, 'retail/index.html', {'insights': insights})

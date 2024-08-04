@@ -592,6 +592,34 @@ Dashboard - Sellebrate
       </tbody>
   </table>
 
+  <h2>Upcoming Promotions</h2>
+  <table class="table table-striped">
+      <thead class="thead-dark">
+          <tr>
+              <th>Promotion ID</th>
+              <th>Product ID</th>
+              <th>Product Name</th>
+              <th>Promotion Name</th>
+              <th>Start Date</th>
+              <th>End Date</th>
+              <th>Discount Percentage</th>
+          </tr>
+      </thead>
+      <tbody>
+          {% for item in insights.upcoming_promotions %}
+          <tr>
+              <td>{{ item.PromotionID }}</td>
+              <td>{{ item.ProductID }}</td>
+              <td>{{ item.ProductName }}</td>
+              <td>{{ item.PromotionName }}</td>
+              <td>{{ item.StartDate }}</td>
+              <td>{{ item.EndDate }}</td>
+              <td>{{ item.DiscountPercentage }}</td>
+          </tr>
+          {% endfor %}
+      </tbody>
+  </table>
+
   {% else %}
   <p>Please log in to view insights and analytics.</p>
   {% endif %}
