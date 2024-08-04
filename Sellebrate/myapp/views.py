@@ -81,7 +81,7 @@ def list_support_tickets(request):
 
     # Calculate resolved and unresolved ticket counts for all tickets
     all_tickets, execution_time_all_tickets = profile_mongo_query(find_documents, 'support_tickets', {})
-    resolved_count = sum(ticket.get('IsIssueResolved', False) for ticket in all_tickets)
+    resolved_count = sum(ticket.get('IsIssueResolved', True) for ticket in all_tickets)
     unresolved_count = len(all_tickets) - resolved_count
 
     # Calculate average resolution time using MongoDB
