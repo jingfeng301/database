@@ -29,19 +29,36 @@ client = MongoClient(settings.MONGO_DB_URI)
 mongo_db = client[settings.MONGO_DB_NAME]
 
 def list_support_tickets(request):
-    # Retrieve support tickets and comments
-    support_tickets = find_documents('support_tickets', {})
-    
-    # Calculate resolved and unresolved ticket counts
-    resolved_count = sum(ticket.get('IsIssueResolved', False) for ticket in support_tickets)
-    unresolved_count = len(support_tickets) - resolved_count
+    # Retrieve filter parameters from the request
+    filter_status = request.GET.get('status', 'all')
+    search_query = request.GET.get('search', '').strip()
+
+    # Determine the base query based on the filter status
+    if filter_status == 'resolved':
+        query = {'IsIssueResolved': True}
+    elif filter_status == 'unresolved':
+        query = {'IsIssueResolved': False}
+    else:
+        query = {}  # No filter, get all tickets
+
+    # Modify the query to include search by TicketID if a search query is present
+    if search_query:
+        query['TicketID'] = search_query
+
+    # Retrieve support tickets using MongoDB query
+    support_tickets = find_documents('support_tickets', query)
+
+    # Calculate resolved and unresolved ticket counts for all tickets
+    all_tickets = find_documents('support_tickets', {})
+    resolved_count = sum(ticket.get('IsIssueResolved', False) for ticket in all_tickets)
+    unresolved_count = len(all_tickets) - resolved_count
 
     # Calculate customer satisfaction rates
     satisfaction_counts = {'Excellent': 0, 'Good': 0, 'Fair': 0, 'Poor': 0}
     total_resolution_time = 0
     resolved_tickets_count = 0
 
-    for ticket in support_tickets:
+    for ticket in all_tickets:
         # Calculate satisfaction rates
         rating = ticket.get('CustomerRating', 'Unknown')
         if rating in satisfaction_counts:
@@ -85,6 +102,8 @@ def list_support_tickets(request):
         'average_resolution_time_hours': hours,
         'ratings_json': ratings_json,
         'counts_json': counts_json,
+        'filter_status': filter_status,  # Pass the current filter status
+        'search_query': search_query,    # Pass the current search query
     }
 
     return render(request, 'retail/support_ticket_list.html', context)

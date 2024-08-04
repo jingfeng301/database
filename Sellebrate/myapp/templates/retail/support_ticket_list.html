@@ -19,7 +19,7 @@
             </div>
         </div>
         <div class="card text-dark bg-warning mb-3" style="max-width: 18rem;">
-            <div class="card-header">Average Resolved Time</div>
+            <div class="card-header">Avg Resolution Time</div>
             <div class="card-body">
                 <p class="card-text" style="font-size: 24px; text-align: center;">
                     {{ average_resolution_time_days }} days, {{ average_resolution_time_hours }} hours
@@ -33,6 +33,25 @@
             <canvas id="satisfactionChart"></canvas>
         </div>
     </div>
+</div>
+
+<!-- Search and Filter Controls -->
+<div class="mb-4">
+    <form method="get" class="form-inline">
+        <div class="form-group mr-3">
+            <label for="searchBar" class="mr-2">Search Ticket ID:</label>
+            <input type="text" name="search" id="searchBar" class="form-control mr-2" value="{{ search_query }}" placeholder="Enter Ticket ID">
+        </div>
+        <div class="form-group mr-3">
+            <label for="statusFilter" class="mr-2">Filter Tickets:</label>
+            <select name="status" id="statusFilter" class="form-control mr-2">
+                <option value="all" {% if filter_status == 'all' %}selected{% endif %}>All Tickets</option>
+                <option value="resolved" {% if filter_status == 'resolved' %}selected{% endif %}>Resolved Tickets</option>
+                <option value="unresolved" {% if filter_status == 'unresolved' %}selected{% endif %}>Unresolved Tickets</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Apply</button>
+    </form>
 </div>
 
 <!-- Support Tickets Table -->
