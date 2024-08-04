@@ -9,83 +9,102 @@ Dashboard - Sellebrate
   <hr class="my-4" />
   {% if insights %}
   <div class="row">
-    <div class="col-md-3">
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-success mb-3">
         <div class="card-header">Total Sales</div>
         <div class="card-body">
           <h5 class="card-title">${{ insights.total_sales }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.sales_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-primary mb-3">
         <div class="card-header">Total Orders</div>
         <div class="card-body">
           <h5 class="card-title">{{ insights.total_orders }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.orders_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
         <div class="card-header">Total Products</div>
         <div class="card-body">
           <h5 class="card-title">{{ insights.total_products }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.products_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
         <div class="card-header">Total Stock</div>
         <div class="card-body">
           <h5 class="card-title">{{ insights.total_stock }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.inventory_status_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
         <div class="card-header">Customer Retention Rate</div>
         <div class="card-body">
           <h5 class="card-title">{{ insights.customer_retention_rate }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.retention_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
         <div class="card-header">Average Order Value</div>
         <div class="card-body">
           <h5 class="card-title">${{ insights.average_order_value }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.average_order_value_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
         <div class="card-header">Average Products per Order</div>
         <div class="card-body">
           <h5 class="card-title">{{ insights.average_products_per_order }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.average_products_per_order_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
-        <div class="card-header">Monthly Recurring Revnue</div>
+        <div class="card-header">Monthly Recurring Revenue</div>
         <div class="card-body">
           <h5 class="card-title">${{ insights.mrr }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.MRR_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
         <div class="card-header">Lifetime Value</div>
         <div class="card-body">
           <h5 class="card-title">{{ insights.ltv }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.LTV_query_time }} seconds</p>
         </div>
       </div>
     </div>
-    <div class="col-md-3">
+  
+    <div class="col-md-3 d-flex">
       <div class="card text-white bg-secondary mb-3">
         <div class="card-header">Average Revenue Per User</div>
         <div class="card-body">
           <h5 class="card-title">${{ insights.arpu }}</h5>
+          <p class="card-text">Query Execution Time: {{ insights.ARPU_query_time }} seconds</p>
         </div>
       </div>
     </div>

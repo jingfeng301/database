@@ -14,6 +14,12 @@
 
     {% if filter == 'popularity' %}
         <h2>Recommended Highest Popularity Products</h2>
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Profiling Information</h5>
+                <p class="card-text">Query Execution Time: <strong>{{ insights.popularity_query_time }} seconds</strong></p>
+            </div>
+        </div>
         <table class="table table-striped">
             <thead class="thead-dark">
                 <tr>
@@ -38,6 +44,14 @@
         </table>
     {% elif filter == 'top_rated' %}
         <h2>Recommended Top Rated Products</h2>
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5 class="card-title">Profiling Information</h5>
+                MongoDB Query Execution Time: <strong>{{ insights.mongo_query_time }} seconds</strong><br>
+                SQL Query Execution Time: <strong>{{ insights.sql_query_time }} seconds</strong><br>
+                Total Execution Time: <strong>{{ insights.execution_time }} seconds</strong>
+            </div>
+        </div>
         <table class="table table-striped">
             <thead class="thead-dark">
                 <tr>

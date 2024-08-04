@@ -35,6 +35,19 @@
     </div>
 </div>
 
+<div class="card mb-3">
+    <div class="card-body">
+        <h5 class="card-title">Profiling Information</h5>
+        <ul class="list-group">
+            {% for profile in mongo_profiling %}
+            <li class="list-group-item">
+                <strong>{{ profile.name }}:</strong> {{ profile.duration }} seconds
+            </li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+
 <!-- Search and Filter Controls -->
 <div class="mb-4">
     <form method="get" class="form-inline">

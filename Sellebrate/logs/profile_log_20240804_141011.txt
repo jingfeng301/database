@@ -1,0 +1,233 @@
+Total Sales Query: SELECT SUM(TotalAmount) FROM orders Execution Time: 0.0000 seconds
+Total Orders Query: SELECT COUNT(*) FROM orders Execution Time: 0.0000 seconds
+Total Products Query: SELECT COUNT(*) FROM products Execution Time: 0.0010 seconds
+Total Stock Query: SELECT SUM(StockQuantity) FROM inventory Execution Time: 0.0000 seconds
+Customer Retention Rate Query: 
+        WITH FirstOrders AS (
+            SELECT CustomerID, MIN(OrderDate) AS FirstOrderDate
+            FROM Orders
+            GROUP BY CustomerID
+        ),
+        ReturningCustomers AS (
+            SELECT fo.CustomerID, COUNT(o.OrderID) AS OrderCount
+            FROM FirstOrders fo
+            JOIN Orders o ON fo.CustomerID = o.CustomerID AND o.OrderDate > fo.FirstOrderDate
+            GROUP BY fo.CustomerID
+        )
+        SELECT
+            COUNT(CASE WHEN OrderCount > 1 THEN 1 END) * 1.0 / COUNT(*) AS RetentionRate
+        FROM ReturningCustomers
+         Execution Time: 0.0033 seconds
+Average Order Value Query: SELECT AVG(TotalAmount) FROM Orders Execution Time: 0.0000 seconds
+Average Products per Order Query: SELECT AVG(Quantity) FROM OrderDetails Execution Time: 0.0010 seconds
+MRR Query: 
+        SELECT
+            SUM(TotalAmount) / (DATEDIFF(MAX(OrderDate), MIN(OrderDate)) / 30) AS MRR
+        FROM Orders
+         Execution Time: 0.0000 seconds
+LTV Query: 
+        SELECT
+            AVG(TotalAmount) * AVG(DateDiff) AS LTV
+        FROM (
+            SELECT TotalAmount, 1.0 / DATEDIFF(CURDATE(), OrderDate) AS DateDiff
+            FROM Orders
+        ) AS subquery
+         Execution Time: 0.0000 seconds
+ARPU Query: 
+        SELECT
+            SUM(TotalAmount) / COUNT(DISTINCT CustomerID) AS ARPU
+        FROM Orders
+         Execution Time: 0.0010 seconds
+Total Sales Data Query: 
+            SELECT p.ProductID, p.ProductName, SUM(od.Quantity) AS TotalUnitsSold, SUM(od.Quantity * od.UnitPrice) AS TotalSales
+            FROM Products p
+            JOIN OrderDetails od ON p.ProductID = od.ProductID
+            GROUP BY p.ProductID, p.ProductName
+            ORDER BY TotalSales DESC
+            LIMIT 5
+         Execution Time: 0.0035 seconds
+Best Selling Per Category Query: 
+            SELECT p.Category, p.ProductID, p.ProductName, SUM(od.Quantity * od.UnitPrice) AS TotalSales
+            FROM Products p
+            JOIN OrderDetails od ON p.ProductID = od.ProductID
+            GROUP BY p.Category, p.ProductID, p.ProductName
+            ORDER BY p.Category, TotalSales DESC
+            LIMIT 5
+         Execution Time: 0.0030 seconds
+Total Sales Per Category Query: 
+            SELECT p.Category, SUM(od.Quantity * od.UnitPrice) AS TotalSales
+            FROM Products p
+            JOIN OrderDetails od ON p.ProductID = od.ProductID
+            GROUP BY p.Category
+            LIMIT 5
+         Execution Time: 0.0020 seconds
+Products Not Sold Last Month Query: 
+            SELECT p.ProductID, p.ProductName, p.Category
+            FROM Products p
+            WHERE p.ProductID NOT IN (
+                SELECT od.ProductID
+                FROM OrderDetails od
+                JOIN Orders o ON od.OrderID = o.OrderID
+                WHERE o.OrderDate >= CURDATE() - INTERVAL 1 MONTH
+            )
+            LIMIT 5
+         Execution Time: 0.0015 seconds
+Customers Without Recent Transactions Query: 
+            SELECT c.CustomerID, c.Name, c.Email
+            FROM Customers c
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM Orders o
+                WHERE o.CustomerID = c.CustomerID AND o.OrderDate > CURDATE() - INTERVAL 1 YEAR
+            )
+            LIMIT 5
+         Execution Time: 0.0010 seconds
+Low Stock Products Query: 
+            SELECT p.ProductID, p.ProductName, i.StockQuantity
+            FROM Products p
+            JOIN Inventory i ON p.ProductID = i.ProductID
+            WHERE i.StockQuantity < 10
+            ORDER BY i.StockQuantity
+            LIMIT 5
+         Execution Time: 0.0000 seconds
+No Stock Products Query: 
+            SELECT p.ProductID, p.ProductName
+            FROM Products p
+            JOIN Inventory i ON p.ProductID = i.ProductID
+            WHERE i.StockQuantity = 0
+            LIMIT 5
+         Execution Time: 0.0000 seconds
+Customers Highest Total Amount Spent Query: 
+            SELECT o.CustomerID, c.Name, c.Email, SUM(o.TotalAmount) AS TotalAmountSpent
+            FROM Orders o
+            JOIN Customers c ON o.CustomerID = c.CustomerID
+            GROUP BY o.CustomerID, c.Name, c.Email
+            ORDER BY TotalAmountSpent DESC
+            LIMIT 5
+         Execution Time: 0.0035 seconds
+Customers Highest Total Orders Query: 
+            SELECT o.CustomerID, c.Name, c.Email, COUNT(o.OrderID) AS TotalOrders
+            FROM Orders o
+            JOIN Customers c ON o.CustomerID = c.CustomerID
+            GROUP BY o.CustomerID, c.Name, c.Email
+            ORDER BY TotalOrders DESC
+            LIMIT 5
+         Execution Time: 0.0025 seconds
+Customers Highest Average Order Amount Query: 
+            SELECT o.CustomerID, c.Name, c.Email, AVG(o.TotalAmount) AS AverageOrderAmount
+            FROM Orders o
+            JOIN Customers c ON o.CustomerID = c.CustomerID
+            GROUP BY o.CustomerID, c.Name, c.Email
+            ORDER BY AverageOrderAmount DESC
+            LIMIT 5
+         Execution Time: 0.0030 seconds
+Customers Highest Total Products Purchased Query: 
+            SELECT o.CustomerID, c.Name, c.Email, SUM(od.Quantity) AS TotalProductsPurchased
+            FROM Orders o
+            JOIN Customers c ON o.CustomerID = c.CustomerID
+            JOIN OrderDetails od ON o.OrderID = od.OrderID
+            GROUP BY o.CustomerID, c.Name, c.Email
+            ORDER BY TotalProductsPurchased DESC
+            LIMIT 5
+         Execution Time: 0.0055 seconds
+Customers Highest Average Products Purchased Query: 
+            SELECT o.CustomerID, c.Name, c.Email, AVG(od.Quantity) AS AverageProductsPurchased
+            FROM Orders o
+            JOIN Customers c ON o.CustomerID = c.CustomerID
+            JOIN OrderDetails od ON o.OrderID = od.OrderID
+            GROUP BY o.CustomerID, c.Name, c.Email
+            ORDER BY AverageProductsPurchased DESC
+            LIMIT 5
+         Execution Time: 0.0083 seconds
+Average Sales Per Day Query: 
+            SELECT
+                DATE(OrderDate) AS SaleDate,
+                AVG(TotalAmount) AS AverageSales
+            FROM Orders
+            GROUP BY DATE(OrderDate)
+            ORDER BY SaleDate DESC
+            LIMIT 30
+         Execution Time: 0.0020 seconds
+Top Products Sold Together Query: 
+            SELECT
+                od1.ProductID AS ProductID1,
+                od2.ProductID AS ProductID2,
+                COUNT(*) AS TimesSoldTogether
+            FROM OrderDetails od1
+            JOIN OrderDetails od2 ON od1.OrderID = od2.OrderID AND od1.ProductID < od2.ProductID
+            GROUP BY ProductID1, ProductID2
+            ORDER BY TimesSoldTogether DESC
+            LIMIT 10
+         Execution Time: 0.0076 seconds
+Average Customer Order Value Query: 
+        SELECT
+            CustomerID,
+            AVG(TotalAmount) AS AverageOrderValue
+        FROM Orders
+        GROUP BY CustomerID
+        ORDER BY AverageOrderValue DESC
+        LIMIT 10
+         Execution Time: 0.0030 seconds
+Monthly Sales Trend Query: 
+        SELECT
+            p.ProductName,
+            YEAR(o.OrderDate) AS Year,
+            MONTH(o.OrderDate) AS Month,
+            SUM(od.Quantity * od.UnitPrice) AS TotalSales
+        FROM OrderDetails od
+        JOIN Orders o ON od.OrderID = o.OrderID
+        JOIN Products p ON od.ProductID = p.ProductID
+        GROUP BY p.ProductName, YEAR(o.OrderDate), MONTH(o.OrderDate)
+        ORDER BY Year DESC, Month DESC, TotalSales DESC
+        LIMIT 5
+         Execution Time: 0.0070 seconds
+Revenue Contribution by Top Customers Query: 
+        SELECT
+            c.CustomerID,
+            c.Name,
+            SUM(o.TotalAmount) AS TotalSpent,
+            SUM(o.TotalAmount) * 1.0 / (SELECT SUM(TotalAmount) FROM Orders) AS Contribution
+        FROM Orders o
+        JOIN Customers c ON o.CustomerID = c.CustomerID
+        GROUP BY c.CustomerID, c.Name
+        ORDER BY TotalSpent DESC
+        LIMIT 10
+         Execution Time: 0.0037 seconds
+Stock Turnover Rate Query: 
+        SELECT
+            p.ProductID,
+            p.ProductName,
+            SUM(od.Quantity) AS TotalSold,
+            i.StockQuantity,
+            (SUM(od.Quantity) / NULLIF(i.StockQuantity, 0)) AS StockTurnoverRate
+        FROM OrderDetails od
+        JOIN Products p ON od.ProductID = p.ProductID
+        JOIN Inventory i ON p.ProductID = i.ProductID
+        GROUP BY p.ProductID, p.ProductName, i.StockQuantity
+        HAVING StockTurnoverRate IS NOT NULL
+        ORDER BY StockTurnoverRate DESC
+        LIMIT 10
+         Execution Time: 0.0055 seconds
+Average Rating Query: [{'$group': {'_id': '$ProductID', 'average_rating': {'$avg': '$Rating'}}}] Execution Time: 0.0207 seconds
+Top Rated Products Query: [{'$group': {'_id': '$ProductID', 'average_rating': {'$avg': '$Rating'}}}, {'$sort': {'average_rating': -1}}, {'$limit': 5}] Execution Time: 0.0010 seconds
+Most Reviewed Products Query: [{'$group': {'_id': '$ProductID', 'review_count': {'$sum': 1}}}, {'$sort': {'review_count': -1}}, {'$limit': 5}] Execution Time: 0.0000 seconds
+Top Rated for Past Year Query: [{'$match': {'ReviewDate': {'$gte': datetime.datetime(2023, 8, 5, 14, 10, 11, 22374)}}}, {'$group': {'_id': '$ProductID', 'average_rating': {'$avg': '$Rating'}}}, {'$sort': {'average_rating': -1}}, {'$limit': 5}] Execution Time: 0.0010 seconds
+Consistent Ratings Query: [{'$group': {'_id': '$ProductID', 'rating_variance': {'$stdDevSamp': '$Rating'}, 'count': {'$sum': 1}}}, {'$match': {'count': {'$gte': 2}}}, {'$sort': {'rating_variance': 1}}, {'$limit': 5}] Execution Time: 0.0023 seconds
+Recommended Highest Popularity Products Query: 
+            SELECT 
+                od.ProductID as product_id, 
+                SUM(od.Quantity) as total_quantity, 
+                p.ProductName as product_name
+            FROM orderdetails od
+            JOIN products p ON od.ProductID = p.ProductID
+            GROUP BY od.ProductID, p.ProductName
+            ORDER BY total_quantity DESC
+            LIMIT 5
+         Execution Time: 0.0040 seconds
+Top Rated Products Query: [{'$group': {'_id': '$ProductID', 'average_rating': {'$avg': '$Rating'}}}, {'$sort': {'average_rating': -1}}, {'$limit': 5}] Execution Time: 0.0011 seconds
+Top Rated Products Info Query: 
+                SELECT ProductID as product_id, ProductName as product_name
+                FROM products
+                WHERE ProductID IN (%s,%s,%s,%s,%s)
+             Execution Time: 0.0000 seconds
+Upcoming Promotions Query: [{'$match': {'StartDate': {'$gte': datetime.datetime(2024, 8, 4, 14, 10, 11, 30833)}}}, {'$sort': {'StartDate': 1}}, {'$limit': 5}] Execution Time: 0.0010 seconds

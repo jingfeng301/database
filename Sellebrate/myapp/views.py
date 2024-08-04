@@ -20,13 +20,48 @@ from django.http import Http404
 from django.shortcuts import render
 from pymongo import MongoClient
 from datetime import datetime, timedelta
-import os
+import os,time 
 
 
 logger = logging.getLogger(__name__)
 
 client = MongoClient(settings.MONGO_DB_URI)
 mongo_db = client[settings.MONGO_DB_NAME]
+
+def profile_mongo_query(query_func, *args, **kwargs):
+    start_time = time.time()
+    result = query_func(*args, **kwargs)
+    end_time = time.time()
+    execution_time = end_time - start_time
+    return result, execution_time
+
+def profile_query(cursor, query, params=None):
+    """
+    Execute an SQL query and profile its execution time.
+
+    Args:
+        cursor: The database cursor for executing the query.
+        query: The SQL query string to execute.
+        params: An optional list of parameters for parameterized queries.
+
+    Returns:
+        A tuple containing the query result and the execution time in seconds.
+    """
+    start_time = time.time()  # Start timing
+
+    # Execute the query
+    if params:
+        cursor.execute(query, params)
+    else:
+        cursor.execute(query)
+
+    result = cursor.fetchall()  # Fetch the result
+    end_time = time.time()  # End timing
+
+    execution_time = end_time - start_time  # Calculate execution time
+
+    return execution_time
+
 
 def list_support_tickets(request):
     # Retrieve filter parameters from the request
@@ -41,49 +76,51 @@ def list_support_tickets(request):
     else:
         query = {}  # No filter, get all tickets
 
-    # Modify the query to include search by TicketID if a search query is present
-    if search_query:
-        query['TicketID'] = search_query
-
-    # Retrieve support tickets using MongoDB query
-    support_tickets = find_documents('support_tickets', query)
+    # Profile MongoDB query for retrieving support tickets
+    support_tickets, execution_time_tickets = profile_mongo_query(find_documents, 'support_tickets', query)
 
     # Calculate resolved and unresolved ticket counts for all tickets
-    all_tickets = find_documents('support_tickets', {})
+    all_tickets, execution_time_all_tickets = profile_mongo_query(find_documents, 'support_tickets', {})
     resolved_count = sum(ticket.get('IsIssueResolved', False) for ticket in all_tickets)
     unresolved_count = len(all_tickets) - resolved_count
 
-    # Calculate customer satisfaction rates
-    satisfaction_counts = {'Excellent': 0, 'Good': 0, 'Fair': 0, 'Poor': 0}
-    total_resolution_time = 0
-    resolved_tickets_count = 0
+    # Calculate average resolution time using MongoDB
+    start_time_avg_resolution = time.time()
+    pipeline = [
+        {"$match": {"IsIssueResolved": True}},
+        {"$project": {
+            "resolution_time": {"$subtract": ["$ResolvedDate", "$CreatedDate"]}
+        }},
+        {"$group": {
+            "_id": None,
+            "average_resolution_time": {"$avg": "$resolution_time"}
+        }}
+    ]
+    average_resolution_time_data = list(mongo_db.support_tickets.aggregate(pipeline))
+    end_time_avg_resolution = time.time()
+    average_resolution_time_time = end_time_avg_resolution - start_time_avg_resolution
 
-    for ticket in all_tickets:
-        # Calculate satisfaction rates
-        rating = ticket.get('CustomerRating', 'Unknown')
-        if rating in satisfaction_counts:
-            satisfaction_counts[rating] += 1
-        
-        # Calculate resolution time
-        if ticket.get('IsIssueResolved', False):
-            resolved_tickets_count += 1
-            created_date = ticket.get('CreatedDate')
-            resolved_date = ticket.get('ResolvedDate')
+    # Extract average resolution time
+    average_resolution_time_seconds = average_resolution_time_data[0]["average_resolution_time"] / 1000 if average_resolution_time_data else 0
+    average_resolution_time_hours = average_resolution_time_seconds / 3600
+    days = int(average_resolution_time_hours // 24)
+    hours = int(average_resolution_time_hours % 24)
 
-            # Ensure the dates are available
-            if created_date and resolved_date:
-                # Directly use datetime objects
-                resolution_time = (resolved_date - created_date).total_seconds()
-                total_resolution_time += resolution_time
+    # Calculate customer satisfaction rates using MongoDB
+    start_time_customer_rating = time.time()
+    satisfaction_pipeline = [
+        {"$group": {
+            "_id": "$CustomerRating",
+            "count": {"$sum": 1}
+        }}
+    ]
+    satisfaction_data = list(mongo_db.support_tickets.aggregate(satisfaction_pipeline))
+    end_time_customer_rating = time.time()
+    customer_rating_time = end_time_customer_rating - start_time_customer_rating
 
-    # Calculate average resolution time in days and hours
-    if resolved_tickets_count > 0:
-        average_resolution_time_hours = total_resolution_time / resolved_tickets_count / 3600
-        days = int(average_resolution_time_hours // 24)
-        hours = int(average_resolution_time_hours % 24)
-    else:
-        days = 0
-        hours = 0
+    # Map satisfaction data to dictionary
+    satisfaction_counts = {item["_id"]: item["count"] for item in satisfaction_data}
+    satisfaction_counts = {rating: satisfaction_counts.get(rating, 0) for rating in ['Excellent', 'Good', 'Fair', 'Poor']}
 
     # Prepare data for Chart.js
     ratings = list(satisfaction_counts.keys())
@@ -104,20 +141,27 @@ def list_support_tickets(request):
         'counts_json': counts_json,
         'filter_status': filter_status,  # Pass the current filter status
         'search_query': search_query,    # Pass the current search query
+        'mongo_profiling': [
+            {'name': 'Retrieve (Specific) Support Tickets', 'duration': round(execution_time_tickets, 6)},
+            {'name': 'Retrieve All Tickets', 'duration': round(execution_time_all_tickets, 6)},
+            {'name': 'Calculate Average Resolution Time', 'duration': round(average_resolution_time_time, 6)},
+            {'name': 'Process Customer Ratings', 'duration': round(customer_rating_time, 6)},
+        ],
     }
 
     return render(request, 'retail/support_ticket_list.html', context)
 
+
 def view_ticket(request, ticket_id):
-    # Retrieve the specific support ticket
-    support_tickets = find_documents('support_tickets', {'TicketID': ticket_id})
+    # Profile MongoDB query for retrieving a specific support ticket
+    support_tickets, execution_time_ticket = profile_mongo_query(find_documents, 'support_tickets', {'TicketID': ticket_id})
     if not support_tickets:
         raise Http404("Support ticket does not exist")
     
     ticket = support_tickets[0]
 
-    # Retrieve all comments for the specific ticket
-    support_ticket_comments = find_documents('support_ticket_comments', {'TicketID': ticket_id})
+    # Profile MongoDB query for retrieving comments for the specific ticket
+    support_ticket_comments, execution_time_comments = profile_mongo_query(find_documents, 'support_ticket_comments', {'TicketID': ticket_id})
     support_ticket_comments = sorted(support_ticket_comments, key=lambda x: x['CreatedDate'], reverse=True)
     logger.debug(f"Support Ticket retrieved: {ticket}")
     logger.debug(f"Support Ticket Comments retrieved: {support_ticket_comments}")
@@ -132,7 +176,11 @@ def view_ticket(request, ticket_id):
     except Customer.DoesNotExist:
         ticket['CustomerName'] = f"Customer ID {ticket['CustomerID']} not found"
 
-    return render(request, 'retail/view_ticket.html', {'ticket': ticket})
+    context = {
+        'ticket': ticket,
+    }
+
+    return render(request, 'retail/view_ticket.html', context)
     
 def add_reply(request, ticket_id):
     if request.method == 'POST':
@@ -144,25 +192,45 @@ def add_reply(request, ticket_id):
             data['AuthorID'] = request.user.id
             data['AuthorIsStaff'] = True
             data['CreatedDate'] = datetime.now()
-            insert_document('support_ticket_comments', data)
+
+            # Profile MongoDB query for inserting a comment
+            _, execution_time_insert = profile_mongo_query(insert_document, 'support_ticket_comments', data)
+
             return redirect('view_ticket', ticket_id=ticket_id)
     else:
         form = SupportTicketCommentForm()
-    return render(request, 'retail/support_ticket_comment_form.html', {'form': form})
+    
+    context = {
+        'form': form,
+        'mongo_profiling': [
+            {'name': 'Insert Comment', 'duration': execution_time_insert if 'execution_time_insert' in locals() else 0},
+        ],
+    }
+
+    return render(request, 'retail/support_ticket_comment_form.html', context)
     
 def resolve_ticket(request, ticket_id):
     if request.method == 'POST':
-        support_tickets = find_documents('support_tickets', {'TicketID': ticket_id})
+        # Profile MongoDB query for retrieving a support ticket
+        support_tickets, execution_time_ticket = profile_mongo_query(find_documents, 'support_tickets', {'TicketID': ticket_id})
         if not support_tickets:
             raise Http404("Support ticket does not exist")
         
         ticket = support_tickets[0]
         ticket['IsIssueResolved'] = True
         ticket['ResolvedDate'] = datetime.now()
-        # Update the ticket in the database (assuming you have a function to update documents)
-        update_document('support_tickets', {'TicketID': ticket_id}, ticket)
+
+        # Profile MongoDB query for updating the ticket
+        _, execution_time_update = profile_mongo_query(update_document, 'support_tickets', {'TicketID': ticket_id}, ticket)
         logger.debug(f"Ticket {ticket_id} marked as resolved.")
         
+        context = {
+            'mongo_profiling': [
+                {'name': 'Retrieve Ticket', 'duration': execution_time_ticket},
+                {'name': 'Update Ticket', 'duration': execution_time_update},
+            ],
+        }
+
         return redirect('view_ticket', ticket_id=ticket_id)
     else:
         raise Http404("Invalid request method")
@@ -248,7 +316,8 @@ def list_recommendations(request):
 
     if filter_type == 'popularity':
         with connection.cursor() as cursor:
-            cursor.execute("""
+            
+            popularity_query = """
                 SELECT 
                     od.ProductID as product_id, 
                     SUM(od.Quantity) as total_quantity, 
@@ -258,42 +327,57 @@ def list_recommendations(request):
                 GROUP BY od.ProductID, p.ProductName
                 ORDER BY total_quantity DESC
                 LIMIT 5
-            """)
+            """
+            
+            cursor.execute(popularity_query)
             top_products = cursor.fetchall()
+            popularity_query_time = profile_query(cursor, popularity_query)
+            popularity_query_time = round(popularity_query_time, 6)
 
         recommendations['recommended_highest_popularity_products'] = [
             {'product_id': product[0], 'product_name': product[2]}
             for product in top_products
         ]
+        recommendations['popularity_query_time'] = popularity_query_time
 
     elif filter_type == 'top_rated':
+        start_time = time.time()
         top_rated_products = mongo_db.review.aggregate([
             {"$group": {"_id": "$ProductID", "average_rating": {"$avg": "$Rating"}}},
             {"$sort": {"average_rating": -1}},
             {"$limit": 5}
         ])
         top_rated_products = list(top_rated_products)
+        end_time = time.time() 
+        mongo_db_query_time = end_time - start_time
         top_rated_product_ids = [str(product["_id"]) for product in top_rated_products]
 
         with connection.cursor() as cursor:
-            format_strings = ','.join(['%s'] * len(top_rated_product_ids))
-            cursor.execute(f"""
+            top_rated_query = """
                 SELECT ProductID as product_id, ProductName as product_name
                 FROM products
-                WHERE ProductID IN ({format_strings})
-            """, tuple(top_rated_product_ids))
-            top_rated_products_info = cursor.fetchall()
+                WHERE ProductID IN (%s)
+            """ % ','.join(['%s'] * len(top_rated_product_ids))  
 
+            # Profile and execute the query
+            sql_query_time = profile_query(cursor, top_rated_query, top_rated_product_ids)
+            cursor.execute(top_rated_query, tuple(top_rated_product_ids))
+            top_rated_products_info = cursor.fetchall()
+            sql_query_time = round(sql_query_time, 6)
+            
         rating_dict = {str(product["_id"]): product["average_rating"] for product in top_rated_products}
 
         recommendations['recommended_top_rated_products'] = [
             {'product_id': product[0], 'product_name': product[1], 'average_rating': rating_dict.get(product[0], 'N/A')}
             for product in top_rated_products_info
         ]
+        recommendations['sql_query_time'] = sql_query_time
+        recommendations['mongo_query_time'] = mongo_db_query_time
+        recommendations['execution_time'] = round(mongo_db_query_time + sql_query_time, 6)
 
     context = {
         'insights': recommendations,
-        'filter': filter_type
+        'filter': filter_type,
     }
 
     return render(request, 'retail/recommendation_list.html', context)
@@ -409,6 +493,7 @@ def user_logout(request):
     return redirect('index')
 
 
+
 #Display all the summed up info for dashboard
 @login_required
 def index(request):
@@ -416,27 +501,39 @@ def index(request):
 
     with connection.cursor() as cursor:
         # Total sales
-        cursor.execute("SELECT SUM(TotalAmount) FROM orders")
+        sales_query = "SELECT SUM(TotalAmount) FROM orders"
+        cursor.execute(sales_query)
         total_sales = cursor.fetchone()[0]
+        sales_query_time = profile_query(cursor, sales_query)
         insights['total_sales'] = round(total_sales, 2) if total_sales is not None else 0.00
+        insights['sales_query_time'] = round(sales_query_time, 6)  # Store for display
 
         # Total number of orders
-        cursor.execute("SELECT COUNT(*) FROM orders")
+        orders_query = "SELECT COUNT(*) FROM orders"
+        cursor.execute(orders_query)
         total_orders = cursor.fetchone()[0]
+        orders_query_time = profile_query(cursor, orders_query)
         insights['total_orders'] = total_orders
+        insights['orders_query_time'] = round(orders_query_time, 6)  # Store for display
 
         # Total number of products
-        cursor.execute("SELECT COUNT(*) FROM products")
+        products_query = "SELECT COUNT(*) FROM products"
+        cursor.execute(products_query)
         total_products = cursor.fetchone()[0]
+        products_query_time = profile_query(cursor, products_query)
         insights['total_products'] = total_products
+        insights['products_query_time'] = round(products_query_time, 6)  # Store for display
 
         # Inventory status (e.g., number of items in stock)
-        cursor.execute("SELECT SUM(StockQuantity) FROM inventory")
+        inventory_status_query = "SELECT SUM(StockQuantity) FROM inventory"
+        cursor.execute(inventory_status_query)
         total_stock = cursor.fetchone()[0]
+        inventory_status_query_time = profile_query(cursor, inventory_status_query)
         insights['total_stock'] = total_stock if total_stock is not None else 0
+        insights['inventory_status_query_time'] = round(inventory_status_query_time, 6)  # Store for display
 
         # Customer retention rate
-        cursor.execute("""
+        customer_retention_query = """
         WITH FirstOrders AS (
             SELECT CustomerID, MIN(OrderDate) AS FirstOrderDate
             FROM Orders
@@ -451,49 +548,69 @@ def index(request):
         SELECT
             COUNT(CASE WHEN OrderCount > 1 THEN 1 END) * 1.0 / COUNT(*) AS RetentionRate
         FROM ReturningCustomers
-        """)
+        """
+        cursor.execute(customer_retention_query)
         customer_retention_rate = cursor.fetchone()[0]
+        retention_time = profile_query(cursor, customer_retention_query)
+        print(f"executed in {retention_time} seconds")
         insights['customer_retention_rate'] = round(customer_retention_rate, 2) if customer_retention_rate is not None else 0.00
+        # Store or log the execution time
+        insights['retention_query_time'] = round(retention_time, 6)  # Store for display
         
         # Average order value
-        cursor.execute("SELECT AVG(TotalAmount) FROM Orders")
+        average_order_value_query = "SELECT AVG(TotalAmount) FROM orders"
+        cursor.execute(average_order_value_query)
         average_order_value = cursor.fetchone()[0]
+        average_order_value_time = profile_query(cursor, average_order_value_query)
         insights['average_order_value'] = round(average_order_value, 2) if average_order_value is not None else 0.00
+        insights['average_order_value_time'] = round(average_order_value_time, 6)  # Store for display
         
         # Average number of products per order
-        cursor.execute("SELECT AVG(Quantity) FROM OrderDetails")
+        average_products_per_order_query = "SELECT AVG(Quantity) FROM orderdetails"
+        cursor.execute(average_products_per_order_query)
         average_products_per_order = cursor.fetchone()[0]
+        average_products_per_order_query_time = profile_query(cursor, average_products_per_order_query)
         insights['average_products_per_order'] = round(average_products_per_order, 2) if average_products_per_order is not None else 0.00
+        insights['average_products_per_order_query_time'] = round(average_products_per_order_query_time, 6)  # Store for display
         
         # MRR
-        cursor.execute("""
+        MRR_query = """
         SELECT
             SUM(TotalAmount) / (DATEDIFF(MAX(OrderDate), MIN(OrderDate)) / 30) AS MRR
         FROM Orders
-        """)
+        """
+        cursor.execute(MRR_query)
         mrr = cursor.fetchone()[0]
+        MRR_query_time = profile_query(cursor, MRR_query)
         insights['mrr'] = round(mrr, 2) if mrr is not None else 0.00
+        insights['MRR_query_time'] = round(MRR_query_time, 6)  # Store for display
                 
         # LTV
-        cursor.execute("""
+        LTV_query = """
         SELECT
             AVG(TotalAmount) * AVG(DateDiff) AS LTV
         FROM (
             SELECT TotalAmount, 1.0 / DATEDIFF(CURDATE(), OrderDate) AS DateDiff
             FROM Orders
         ) AS subquery
-        """)
+        """
+        cursor.execute(LTV_query)
         ltv = cursor.fetchone()[0]
+        LTV_query_time = profile_query(cursor, LTV_query)
         insights['ltv'] = round(ltv, 2) if ltv is not None else 0.00
+        insights['LTV_query_time'] = round(LTV_query_time, 6)  # Store for display
         
         # ARPU
-        cursor.execute("""
+        ARPU_qeury = """
         SELECT
             SUM(TotalAmount) / COUNT(DISTINCT CustomerID) AS ARPU
         FROM Orders
-        """)
+        """
+        cursor.execute(ARPU_qeury)
         arpu = cursor.fetchone()[0]
+        arpu_query_time = profile_query(cursor, ARPU_qeury)
         insights['arpu'] = round(arpu, 2) if arpu is not None else 0.00
+        insights['ARPU_query_time'] = round(arpu_query_time, 6)  # Store for display
         
         # Average order value
         cursor.execute("""
@@ -1071,7 +1188,7 @@ def product_list(request):
     return render(request, 'retail/product_list.html', {
         'page_obj': page_obj,
         'product_name': product_name,
-        'product_id': product_id
+        'product_id': product_id,
     })
 
 
